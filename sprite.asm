@@ -5,19 +5,14 @@
 .export __sprite_off
 .export __sprite_offall
 
-BLANK  = MAX_SPRITES
-PLAYER = MAX_SPRITES+1
-TREE = MAX_SPRITES+2
-
 ;--------------------------------------
 .segment "CHARS"
 sprites:
 .res MAX_SPRITES * 8
 .res 8
-.byte $0a,$0a,$a0,$aa,$aa,$aa,$aa,$aa 	; player
 .byte  0,24,60,60,126,255,255,24 	; tree
+.byte $0a,$0a,$a0,$aa,$aa,$aa,$aa,$aa 	; player
 .byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
-
 
 sprite_positions: .res MAX_SPRITES*2
 
@@ -145,7 +140,7 @@ allocated_sprites: .res MAX_SPRITES
 ; putsprite finds the next available sprite slot and places it to the
 ; screen @ ($f0),y.  The LSB of the allocated UDG is returned in .A
 putsprite:
-	cmp #MAX_SPRITES
+	cmp #BLANK
 	bcc @done
 	; find a free sprite location in the table
 	ldx #MAX_SPRITES-1
@@ -164,19 +159,20 @@ putsprite:
 	asl
 	asl
 	asl
-	tax
-	adc #$08
-	sta @xstop
-	asl
-	asl
-	asl
 	tay
+	adc #$08
+	sta @ystop
+	txa
+	asl
+	asl
+	asl
+	tax
 @l0:	lda CHARMEM,y
 	sta sprites,x
 	inx
 	iny
-@xstop=*+1
-	cpx #$00
+@ystop=*+1
+	cpy #$00
 	bne @l0
 	pla
 @ysave=*+1
@@ -223,7 +219,6 @@ putsprite:
 	sta ($f0),y
 
 @done:
-
 	; deallocate all sprites (prepare to draw new frame)
 	lda #$ff
 	ldx #MAX_SPRITES-1

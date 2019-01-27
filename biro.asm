@@ -19,7 +19,7 @@ start:
 :	lda #$00 | $08
 	sta COLORMEM,x
 	sta COLORMEM+$100,x
-	lda #MAX_SPRITES
+	lda #BLANK
 	sta SCREEN,x
 	sta SCREEN+$100,x
 	dex
@@ -74,24 +74,66 @@ handle_movement:
 :	lda @dirty
 	beq @done
 
-@redrawplayer:
 	ldx prevx
 	ldy prevy
 	jsr sprite::off
+
+	lda xpos
+	cmp #SCREEN_W*8
+	bne :+
+@screenright:
+	lda #$00
+	sta xpos
+	jsr scrollleft
+	jmp @updateplayer
+
+:
+.ifdef MULTICOLOR
+	cmp #$fe
+.else
+	cmp #$ff
+.endif
+	bne :+
+@screenleft:
+	lda #SCREEN_W*8-8
+	sta xpos
+	jsr scrollright
+	jmp @updateplayer
+
+:	lda ypos
+	cmp #SCREEN_H*8-8
+	bne :+
+@screendown:
+	lda #0
+	sta ypos
+	jsr scrollup
+	jmp @redrawplayer
+:
+@screenup:
+	cmp #$ff
+	bne @updateplayer
+	jsr scrolldown
+	lda #(SCREEN_H*8-8)
+	sta ypos
+	sta prevy
+	jmp @redrawplayer
+
+@updateplayer:
 	ldx xpos
 	ldy ypos
 	jsr canmove
 	bne @stay
+@redrawplayer:
 	ldx xpos
 	ldy ypos
-	lda #MAX_SPRITES+1
+	lda #PLAYER
 	jsr sprite::on
 @done:	rts
 @stay:	ldx prevx
 	ldy prevy
 	stx xpos
 	sty ypos
-	lda #MAX_SPRITES+1
+	lda #PLAYER
 	jsr sprite::on
 	rts
 
@@ -102,20 +144,231 @@ prevy: .byte 0
 .proc canmove
 	jsr screen::getchar
 	lda ($f0),y
-	cmp #MAX_SPRITES
+	cmp #BLANK
 	bne @no
 	iny
 	lda ($f0),y
-	cmp #MAX_SPRITES
+	cmp #BLANK
 	bne @no
 	ldy #SCREEN_W
 	lda ($f0),y
-	cmp #MAX_SPRITES
+	cmp #BLANK
 	bne @no
 	iny
 	lda ($f0),y
-	cmp #MAX_SPRITES
+	cmp #BLANK
 @no:	rts
+.endproc
+
+
+;--------------------------------------
+gentab:	.byte BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,TREE
+;--------------------------------------
+.proc genchar
+	ldx #2
+	jsr rnd::num
+	tax
+	lda gentab,x
+	rts
+.endproc
+
+;--------------------------------------
+.proc scrollup
+@cnt=$20
+@src=$22
+@dst=$24
+	lda #SCREEN_H
+	sta @cnt
+@scroll: ldx #SCREEN_H
+	lda #<SCREEN
+	sta @dst
+	lda #<(SCREEN+SCREEN_W)
+	sta @src
+	lda #>SCREEN
+	sta @src+1
+	sta @dst+1
+
+@l0:	ldy #SCREEN_W-1
+@l1:	lda (@src),y
+	sta (@dst),y
+	dey
+	bpl @l1
+
+	lda @src
+	clc
+	adc #SCREEN_W
+	sta @src
+	bcc :+
+	inc @src+1
+:	lda @dst
+	clc
+	adc #SCREEN_W
+	sta @dst
+	bcc :+
+	inc @dst+1
+:	dex
+	bne @l0
+
+	ldy #SCREEN_W
+@l2:	jsr genchar
+	sta SCREEN+(SCREEN_W*SCREEN_H-SCREEN_W),y
+	dey
+	bpl @l2
+	dec @cnt
+
+	bne @scroll
+	rts
+.endproc
+
+;--------------------------------------
+.proc scrollright
+@cnt=$20
+@cnt2=$26
+@src=$22
+@dst=$24
+	lda #SCREEN_W
+	sta @cnt
+@scroll:
+	lda #<SCREEN+SCREEN_W+1
+	sta @dst
+	lda #<SCREEN+SCREEN_W
+	sta @src
+	lda #>SCREEN
+	sta @src+1
+	sta @dst+1
+
+	ldx #SCREEN_H
+	stx @cnt2
+@l0:	ldy #SCREEN_W-1
+@l1:	lda (@src),y
+	sta (@dst),y
+	dey
+	bne @l1
+	jsr genchar
+	sta (@dst),y
+
+	lda @src
+	clc
+	adc #SCREEN_W
+	sta @src
+	bcc :+
+	inc @src+1
+
+:	lda @dst
+	clc
+	adc #SCREEN_W
+	sta @dst
+	bcc :+
+	inc @dst+1
+
+:	dec @cnt2
+	bne @l0
+
+	dec @cnt
+	bne @scroll
+	rts
+.endproc
+
+
+;--------------------------------------
+.proc scrollleft
+@cnt=$20
+@cnt2=$26
+@src=$22
+@dst=$24
+	lda #SCREEN_W
+	sta @cnt
+@scroll:
+	lda #<SCREEN
+	sta @dst
+	lda #<SCREEN+1
+	sta @src
+	lda #>SCREEN
+	sta @src+1
+	sta @dst+1
+
+	ldx #SCREEN_H
+	stx @cnt2
+@l0:	ldy #$00
+@l1:	lda (@src),y
+	sta (@dst),y
+	iny
+	cpy #SCREEN_W-1
+	bcc @l1
+	jsr genchar
+	sta (@dst),y
+
+	lda @src
+	clc
+	adc #SCREEN_W
+	sta @src
+	bcc :+
+	inc @src+1
+
+:	lda @dst
+	clc
+	adc #SCREEN_W
+	sta @dst
+	bcc :+
+	inc @dst+1
+
+:	dec @cnt2
+	bne @l0
+
+	dec @cnt
+	bne @scroll
+	rts
+.endproc
+
+;--------------------------------------
+.proc scrolldown
+@cnt=$20
+@src=$22
+@dst=$24
+	lda #SCREEN_H
+	sta @cnt
+@scroll: ldx #SCREEN_H
+	lda #<(SCREEN+(SCREEN_W*SCREEN_H)-SCREEN_W)
+	sta @dst
+	lda #<(SCREEN+(SCREEN_W*SCREEN_H)-(SCREEN_W*2))
+	sta @src
+	lda #>(SCREEN+(SCREEN_W*SCREEN_H)-SCREEN_W)
+	sta @src+1
+	sta @dst+1
+
+@l0:	ldy #SCREEN_W-1
+@l1:	lda (@src),y
+	sta (@dst),y
+	dey
+	bpl @l1
+
+	lda @src
+	sec
+	sbc #SCREEN_W
+	sta @src
+	lda @src+1
+	sbc #$00
+	sta @src+1
+
+	lda @dst
+	sec
+	sbc #SCREEN_W
+	sta @dst
+	lda @dst+1
+	sbc #$00
+	sta @dst+1
+	dex
+	bne @l0
+
+	ldy #SCREEN_W
+@l2:	jsr genchar
+	sta SCREEN,y
+	dey
+	bpl @l2
+
+	dec @cnt
+	bne @scroll
+	rts
 .endproc
 
 ;--------------------------------------
@@ -123,11 +376,17 @@ prevy: .byte 0
 	ldy #$ff
 @l0:	dey
 	beq @done
-	ldx #3
+	ldx #2
 	jsr rnd::num
-	bne @l0
-	lda #MAX_SPRITES+2
+	tax
+	lda gentab,x
 	sta SCREEN,y
+	ldx #2
+	jsr rnd::num
+	tax
+	lda gentab,x
+	sta SCREEN+$100,y
 	jmp @l0
 @done:	rts
 .endproc
+

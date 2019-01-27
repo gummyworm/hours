@@ -9,8 +9,8 @@ __rnd_seed: .word 2019
 @result=$f0
 	lda #$00
 	sta @result
-	lsr __rnd_seed
-@l0:	ror __rnd_seed+1
+@l0:	lsr __rnd_seed
+	ror __rnd_seed+1
 	bcc :+
 	lda __rnd_seed
 	eor #$aa  ; most significant bit *must* be set
