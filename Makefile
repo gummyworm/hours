@@ -1,7 +1,8 @@
+NAME=hours.prg
 SRC=$(wildcard *.asm)
-biro.prg: $(SRC)
+$(NAME): $(SRC)
 	cl65 -o $@ -C link.config $^ 
 test:
-	xvic -memory none -ntsc biro.prg
+	xvic -memory none -ntsc $(NAME)
 clean:
-	rm *.o biro.prg
+	rm *.o $(NAME)
