@@ -14,6 +14,10 @@ COLORMEM=$9600
 
 ; if MULTICOLOR is defined, x-movement occurs in 2-pixel granularity
 MULTICOLOR = 1
+BG_COLOR=13
+BORDER_COLOR=5
+AUX_COLOR=8
+CHAR_COLOR=0
 
 ; character constants
 BLANK  = MAX_SPRITES

@@ -17,7 +17,7 @@
 .segment "BOOT"
 start:
 	ldx #$00
-:	lda #$00 | $08
+:	lda #CHAR_COLOR | $08
 	sta COLORMEM,x
 	sta COLORMEM+$100,x
 	lda #BLANK
@@ -28,6 +28,10 @@ start:
 	jsr joy::init
 	lda #$ff	; chars @ $1c00, screen @ $1e00
 	sta $9005
+	lda #(BORDER_COLOR | (BG_COLOR << 4))
+	sta $900f
+	lda #(AUX_COLOR << 4)
+	sta $900e
 	sei
 	jmp enter
 
