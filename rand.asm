@@ -1,6 +1,7 @@
+.CODE
+
 .export __rnd_num
 .export __rnd_seed
-.CODE
 
 __rnd_seed: .word 2019
 

@@ -1,3 +1,5 @@
+.CODE
+
 .export __screen_getchar
 
 .include "constants.inc"

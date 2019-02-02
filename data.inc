@@ -1,2 +1,0 @@
-.import xpos
-.import ypos

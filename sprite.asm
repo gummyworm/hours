@@ -1,3 +1,5 @@
+.CODE
+
 .include "constants.inc"
 .include "screen.inc"
 
@@ -17,7 +19,6 @@ sprites:
 sprite_positions: .res MAX_SPRITES*2
 
 ;--------------------------------------
-.CODE
 allocated_sprites: .res MAX_SPRITES
 
 ;--------------------------------------
