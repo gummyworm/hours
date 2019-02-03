@@ -11,6 +11,9 @@
 .include "rand.inc"
 .include "constants.inc"
 
+worldx: .byte 2
+worldy: .byte 2
+
 ;--------------------------------------
 .proc __gen_screen
 	ldy #$ff
@@ -41,11 +44,14 @@
 .endproc
 
 ;--------------------------------------
-.proc __gen_scrollr
+.proc __gen_scrolll
 @cnt=$20
 @cnt2=$26
 @src=$22
 @dst=$24
+	dec worldx
+	jsr seed
+
 	lda #SCREEN_W
 	sta @cnt
 @scroll:
@@ -90,11 +96,14 @@
 .endproc
 
 ;--------------------------------------
-.proc __gen_scrolll
+.proc __gen_scrollr
 @cnt=$20
 @cnt2=$26
 @src=$22
 @dst=$24
+	inc worldx
+	jsr seed
+
 	lda #SCREEN_W
 	sta @cnt
 @scroll:
@@ -140,10 +149,13 @@
 .endproc
 
 ;--------------------------------------
-.proc __gen_scrollu
+.proc __gen_scrolld
 @cnt=$20
 @src=$22
 @dst=$24
+	inc worldy
+	jsr seed
+
 	lda #SCREEN_H
 	sta @cnt
 @scroll: ldx #SCREEN_H
@@ -188,10 +200,13 @@
 .endproc
 
 ;--------------------------------------
-.proc __gen_scrolld
+.proc __gen_scrollu
 @cnt=$20
 @src=$22
 @dst=$24
+	dec worldy
+	jsr seed
+
 	lda #SCREEN_H
 	sta @cnt
 @scroll: ldx #SCREEN_H
@@ -227,7 +242,7 @@
 	dex
 	bne @l0
 
-	ldy #SCREEN_W
+	ldy #SCREEN_W-1
 @l2:	jsr __gen_char
 	sta SCREEN,y
 	dey
@@ -235,6 +250,28 @@
 
 	dec @cnt
 	bne @scroll
+
+	; if at the top of the world, make top row a barrier
+	lda worldy
+	cmp #1
+	bne @done
+	lda #TREE
+	ldy #SCREEN_W-1
+@l3:	lda #TREE
+	sta SCREEN,y
+	dey
+	bpl @l3
+
+@done:	rts
+.endproc
+
+;--------------------------------------
+.proc seed
+	dec worldx
+	ldx worldx
+	ldy worldy
+	stx rnd::seed
+	sty rnd::seed+1
 	rts
 .endproc
 

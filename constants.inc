@@ -34,4 +34,8 @@ DIR_DOWN = 1
 DIR_LEFT = 2
 DIR_RIGHT = 3
 
+; world generation constants
+WORLD_W=32
+WORLD_H=16
+
 .endif

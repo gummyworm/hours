@@ -38,6 +38,8 @@ start:
 .CODE
 enter:
 	jsr gen::screen
+	jsr player::off
+	jsr player::on
 main:
 	lda #$6f
 	cmp $9004

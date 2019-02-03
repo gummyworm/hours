@@ -7,10 +7,12 @@
 .include "sprite.inc"
 
 .export __player_update
+.export __player_on
+.export __player_off
 
 ;--------------------------------------
-xpos: .byte 0
-ypos: .byte 0
+xpos: .byte 30
+ypos: .byte 50
 dir: .byte 0
 prevx: .byte 0
 prevy: .byte 0
@@ -89,7 +91,7 @@ swinging: .byte 0
 	lda xpos
 	cmp #SCREEN_W*8
 	bne @screenleft
-	lda #$00
+	lda #$01
 	sta xpos
 	jsr gen::scrolll
 	jmp @updateplayer
@@ -101,7 +103,7 @@ swinging: .byte 0
 	cmp #$ff
 .endif
 	bne @screendown
-	lda #SCREEN_W*8-8
+	lda #SCREEN_W*8-9
 	sta xpos
 	jsr gen::scrollr
 	jmp @updateplayer
@@ -110,7 +112,7 @@ swinging: .byte 0
 	lda ypos
 	cmp #SCREEN_H*8-8
 	bne @screenup
-	lda #0
+	lda #$01
 	sta ypos
 	jsr gen::scrollu
 	jmp @redrawplayer
@@ -118,8 +120,8 @@ swinging: .byte 0
 @screenup:
 	cmp #$ff
 	bne @updateplayer
-	jsr gen::scrolld
-	lda #(SCREEN_H*8-8)
+	jsr gen::scrollu
+	lda #(SCREEN_H*8-9)
 	sta ypos
 	sta prevy
 	jmp @redrawplayer
@@ -135,12 +137,34 @@ swinging: .byte 0
 	sty ypos
 
 @redrawplayer:
+	jsr __player_on
 	ldx xpos
 	ldy ypos
 	lda #PLAYER
 	jsr sprite::on
 @done:	rts
+.endproc
 
+;--------------------------------------
+.proc __player_off
+	lda swinging
+	beq :+
+	ldx swordx
+	ldy swordy
+	jsr sprite::off
+:	ldx xpos
+	ldy ypos
+	jmp sprite::off
+.endproc
+
+;--------------------------------------
+.proc __player_on
+	ldx xpos
+	ldy ypos
+	stx prevx
+	sty prevy
+	lda #PLAYER
+	jmp sprite::on
 .endproc
 
 ;--------------------------------------
