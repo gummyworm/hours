@@ -81,9 +81,16 @@ swinging: .byte 0
 
 @inputdone:
 	lda @dirty
-	beq @done
+	bne :+
+	rts
 
-	ldx prevx
+:	lda swinging
+	beq :+
+	ldx swordx
+	ldy swordy
+	jsr sprite::off
+
+:	ldx prevx
 	ldy prevy
 	jsr sprite::off
 
