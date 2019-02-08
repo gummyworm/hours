@@ -12,7 +12,7 @@ sprites=charset
 
 ;--------------------------------------
 sprite_positions: .res MAX_SPRITES*2
-allocated_sprites: .res MAX_SPRITES
+allocated_sprites: .res MAX_SPRITES,$ff
 
 ;--------------------------------------
 ; on puts a sprite from the character table at index .A into a sprite at
@@ -186,47 +186,43 @@ putsprite:
 	lda ($f0),y
 	cmp #MAX_SPRITES
 	bcs @done
-
-	lda #BLANK
 	tax
-	sta ($f0),y
-
-	iny
-	lda ($f0),y
-	cmp #MAX_SPRITES
-	bcs :+
-	txa
-	sta ($f0),y
-
-:	ldy #SCREEN_W
-	lda ($f0),y
-	cmp #MAX_SPRITES
-	bcs @done
-	txa
-	sta ($f0),y
-
-	iny
-	lda ($f0),y
-	cmp #MAX_SPRITES
-	bcs @done
-	txa
-	sta ($f0),y
-
-@done:
-	; deallocate all sprites (prepare to draw new frame)
 	lda #$ff
-	ldx #MAX_SPRITES-1
-@l0:	sta allocated_sprites,x
-	dex
-	bpl @l0
+	sta allocated_sprites,x
+	lda #BLANK
+	sta ($f0),y
 
-	ldx #MAX_SPRITES*8
-	lda #$00
-@l1:	sta CHARMEM-1,x
-	dex
-	bne @l1
+	iny
+	lda ($f0),y
+	cmp #MAX_SPRITES
+	bcs @row2
+	tax
+	lda #$ff
+	sta allocated_sprites,x
+	lda #BLANK
+	sta ($f0),y
 
-	rts
+@row2:	ldy #SCREEN_W
+	lda ($f0),y
+	cmp #MAX_SPRITES
+	bcs @done
+	tax
+	lda #$ff
+	sta allocated_sprites,x
+	lda #BLANK
+	sta ($f0),y
+
+	iny
+	lda ($f0),y
+	cmp #MAX_SPRITES
+	bcs @done
+	tax
+	lda #$ff
+	sta allocated_sprites,x
+	lda #BLANK
+	sta ($f0),y
+
+@done:	rts
 .endproc
 
 ;--------------------------------------

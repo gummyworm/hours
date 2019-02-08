@@ -35,10 +35,6 @@ swinging: .byte 0
 	.byte $2c
 :	lda #$00
 	sta @dirty
-	ldx xpos
-	ldy ypos
-	stx prevx
-	sty prevy
 
 @up:	jsr joy::up
 	bne @down
@@ -74,25 +70,21 @@ swinging: .byte 0
 	lda #DIR_RIGHT
 	sta dir
 
-@fire:	jsr joy::fire
+@fire:  lda @dirty
+	bne @spritesoff
+	jsr joy::fire
 	bne @inputdone
 	jsr action
 	jmp @updateplayer
-
 @inputdone:
-	lda @dirty
-	bne :+
 	rts
 
-:	lda swinging
-	beq :+
-	ldx swordx
-	ldy swordy
-	jsr sprite::off
-
-:	ldx prevx
+@spritesoff:
+	ldx prevx
 	ldy prevy
 	jsr sprite::off
+	lda swinging
+	beq @screenright
 
 @screenright:
 	lda xpos
@@ -154,12 +146,7 @@ swinging: .byte 0
 
 ;--------------------------------------
 .proc __player_off
-	lda swinging
-	beq :+
-	ldx swordx
-	ldy swordy
-	jsr sprite::off
-:	ldx xpos
+	ldx xpos
 	ldy ypos
 	jmp sprite::off
 .endproc
@@ -199,7 +186,6 @@ swinging: .byte 0
 	lda swinging
 	beq :+
 	rts
-
 :	lda xpos
 	sta swordx
 	lda ypos
