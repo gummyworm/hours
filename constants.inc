@@ -4,13 +4,19 @@ CONSTANTS_INC = 1
 ; gameplay constants
 SWINGING_TIME = 20	; frames to swing player weapon upon FIRE
 
+IRQ_RASTER_START = $63
+IRQ_RASTER_END = IRQ_RASTER_START+16
+
 ; memory contants
 SCREEN = $1e00
 SCREEN_W = 22
-SCREEN_H = 23
+SCREEN_H = 23-2	 ; height of playfield
 MAX_SPRITES = 16
 CHARMEM=$1c00
 COLORMEM=$9600
+
+; UI constants
+HEALTH_ROW = SCREEN_H
 
 ; if MULTICOLOR is defined, x-movement occurs in 2-pixel granularity
 MULTICOLOR = 1

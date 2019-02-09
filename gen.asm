@@ -52,18 +52,18 @@ worldy: .byte 2
 	dec worldx
 	jsr seed
 
-	lda #SCREEN_W
+	lda #SCREEN_W-1
 	sta @cnt
 @scroll:
-	lda #<SCREEN+SCREEN_W+1
-	sta @dst
 	lda #<SCREEN+SCREEN_W
+	sta @dst
+	lda #<SCREEN+SCREEN_W-1
 	sta @src
 	lda #>SCREEN
 	sta @src+1
 	sta @dst+1
 
-	ldx #SCREEN_H
+	ldx #SCREEN_H-1
 	stx @cnt2
 @l0:	ldy #SCREEN_W-1
 @l1:	lda (@src),y
@@ -115,7 +115,7 @@ worldy: .byte 2
 	sta @src+1
 	sta @dst+1
 
-	ldx #SCREEN_H
+	ldx #SCREEN_H-1
 	stx @cnt2
 @l0:	ldy #$00
 @l1:	lda (@src),y

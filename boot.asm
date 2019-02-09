@@ -1,4 +1,5 @@
 .include "constants.inc"
+.include "irq.inc"
 .include "joy.inc"
 .include "gen.inc"
 .include "rand.inc"
@@ -17,6 +18,7 @@
 .segment "BOOT"
 start:
 	ldx #$00
+	; clear the color and screen mem
 :	lda #CHAR_COLOR | $08
 	sta COLORMEM,x
 	sta COLORMEM+$100,x
@@ -25,24 +27,56 @@ start:
 	sta SCREEN+$100,x
 	dex
 	bne :-
+
+	; bottom row(s) are not multicolor
+	lda #$00|$00
+	ldx #SCREEN_W*2
+:	sta COLORMEM+(SCREEN_W*(SCREEN_H)),x
+	dex
+	bpl :-
+
 	jsr joy::init
 	lda #$ff	; chars @ $1c00, screen @ $1e00
 	sta $9005
-	lda #(BORDER_COLOR | (BG_COLOR << 4))
+	lda #(BORDER_COLOR | (BG_COLOR << 4))|$08
 	sta $900f
 	lda #(AUX_COLOR << 4)
 	sta $900e
-	sei
 	jmp enter
+	sei
 
 .CODE
 enter:
 	jsr gen::screen
 	jsr player::off
 	jsr player::on
-main:
-	lda #$6f
-	cmp $9004
-	bne *-3
-	jsr player::update
+
+initui:
+	ldx #<splitirq
+	ldy #>splitirq
+	lda #IRQ_RASTER_START
+	jsr irq::raster
+	lda #$01
+	jsr player::harm
 	jmp main
+
+main:	lda nextframe
+	bne main
+	jsr player::update
+	inc nextframe
+	jmp main
+
+splitirq:
+	; wait for 8 raster lines
+	lda #$f0
+	sta $9005
+	lda #IRQ_RASTER_END
+:	cmp $9004
+	bne :-
+	lda #$ff
+	sta $9005
+	lda #$00
+	sta nextframe
+	jmp $eabf
+
+nextframe: .byte 0

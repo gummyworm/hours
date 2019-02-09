@@ -9,6 +9,7 @@
 .export __player_update
 .export __player_on
 .export __player_off
+.export __player_harm
 
 ;--------------------------------------
 xpos: .byte 30
@@ -19,6 +20,31 @@ prevy: .byte 0
 swordx: .byte 0
 swordy: .byte 0
 swinging: .byte 0
+hp: .byte 3+1
+
+;--------------------------------------
+; deal .A points of damage to player
+.proc __player_harm
+	sta $f0
+	lda hp
+	sec
+	sbc $f0
+	sta hp
+	bcs @updateui
+
+@die:	inc $900f
+	jmp *-3
+@updateui:
+	lda #' '
+@l0:	sta SCREEN+(HEALTH_ROW*SCREEN_W),x
+	dex
+	bpl :+
+	rts
+:	cpx hp
+	bcs @l0
+	lda #$d3
+	bne @l0
+.endproc
 
 ;--------------------------------------
 ; update handles joystick input and updates the player accordingly.
@@ -35,6 +61,7 @@ swinging: .byte 0
 	.byte $2c
 :	lda #$00
 	sta @dirty
+	jsr joy::init
 
 @up:	jsr joy::up
 	bne @down
