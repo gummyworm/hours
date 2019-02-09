@@ -113,7 +113,7 @@ swinging: .byte 0
 	bne @screenup
 	lda #$01
 	sta ypos
-	jsr gen::scrollu
+	jsr gen::scrolld
 	jmp @redrawplayer
 
 @screenup:

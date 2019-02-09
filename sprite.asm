@@ -5,14 +5,13 @@
 
 .export __sprite_on
 .export __sprite_off
-.export __sprite_offall
 
 .import charset
 sprites=charset
 
 ;--------------------------------------
-sprite_positions: .res MAX_SPRITES*2
 allocated_sprites: .res MAX_SPRITES,$ff
+backup_buffer: 	   .res MAX_SPRITES
 
 ;--------------------------------------
 ; on puts a sprite from the character table at index .A into a sprite at
@@ -136,6 +135,8 @@ allocated_sprites: .res MAX_SPRITES,$ff
 putsprite:
 	cmp #BLANK
 	bcc @done
+	pha
+
 	; find a free sprite location in the table
 	ldx #MAX_SPRITES-1
 :	lda allocated_sprites,x
@@ -143,8 +144,11 @@ putsprite:
 	beq @found
 	dex
 	bpl :-
+	bmi *			; TODO: error (too many sprites drawn)
 
-@found:	txa
+@found:	pla
+	sta backup_buffer,x	; save the character that is being clobbered
+	txa
 	sta allocated_sprites,x
 
 @copy:	pha
@@ -168,9 +172,10 @@ putsprite:
 @ystop=*+1
 	cpy #$00
 	bne @l0
-	pla
+
 @ysave=*+1
 	ldy #$00
+	pla
 
 @done:	sta ($f0),y
 	asl
@@ -187,40 +192,40 @@ putsprite:
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
+	lda backup_buffer,x
+	sta ($f0),y
 	lda #$ff
 	sta allocated_sprites,x
-	lda #BLANK
-	sta ($f0),y
 
 	iny
 	lda ($f0),y
 	cmp #MAX_SPRITES
 	bcs @row2
 	tax
+	lda backup_buffer,x
+	sta ($f0),y
 	lda #$ff
 	sta allocated_sprites,x
-	lda #BLANK
-	sta ($f0),y
 
 @row2:	ldy #SCREEN_W
 	lda ($f0),y
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
+	lda backup_buffer,x
+	sta ($f0),y
 	lda #$ff
 	sta allocated_sprites,x
-	lda #BLANK
-	sta ($f0),y
 
 	iny
 	lda ($f0),y
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
+	lda backup_buffer,x
+	sta ($f0),y
 	lda #$ff
 	sta allocated_sprites,x
-	lda #BLANK
-	sta ($f0),y
 
 @done:	rts
 .endproc

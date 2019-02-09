@@ -6,7 +6,7 @@
 
 ;--------------------------------------
 ; getchar returns the character at (.X, .Y) in .A and the address of the
-; character in ($f0)+.Y
+; character in $f0-$f1
 .proc __screen_getchar
 	lda #>SCREEN
 	sta $f0+1
