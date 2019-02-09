@@ -83,27 +83,27 @@ swinging: .byte 0
 	ldx prevx
 	ldy prevy
 	jsr sprite::off
-	lda swinging
-	beq @screenright
 
-@screenright:
+@screenleft:
 	lda xpos
-	cmp #SCREEN_W*8
-	bne @screenleft
-	lda #$01
+	cmp #$fe
+	bcc @screenright
+	lda #(SCREEN_W*8-10)
 	sta xpos
+	sta prevx
 	jsr gen::scrolll
 	jmp @updateplayer
 
-@screenleft:
+@screenright:
+	cmp #SCREEN_W*8-8
+	bcc @screendown
 .ifdef MULTICOLOR
-	cmp #$fe
+	lda #$02
 .else
-	cmp #$ff
+	lda #$01
 .endif
-	bne @screendown
-	lda #SCREEN_W*8-9
 	sta xpos
+	sta prevx
 	jsr gen::scrollr
 	jmp @updateplayer
 
