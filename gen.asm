@@ -8,11 +8,20 @@
 .export __gen_scrollu
 .export __gen_scrolld
 
-.include "rand.inc"
 .include "constants.inc"
+.include "enemy.inc"
+.include "rand.inc"
+.include "sprite.inc"
 
 worldx: .byte 2
 worldy: .byte 2
+
+;--------------------------------------
+; clear all enemies and sprites
+.proc clear
+	jsr enemy::clear
+	jmp sprite::clear
+.endproc
 
 ;--------------------------------------
 .proc __gen_screen
@@ -49,6 +58,7 @@ worldy: .byte 2
 @cnt2=$26
 @src=$22
 @dst=$24
+	jsr clear
 	dec worldx
 	jsr seed
 
@@ -101,6 +111,7 @@ worldy: .byte 2
 @cnt2=$26
 @src=$22
 @dst=$24
+	jsr clear
 	inc worldx
 	jsr seed
 
@@ -153,6 +164,7 @@ worldy: .byte 2
 @cnt=$20
 @src=$22
 @dst=$24
+	jsr clear
 	inc worldy
 	jsr seed
 
@@ -204,6 +216,7 @@ worldy: .byte 2
 @cnt=$20
 @src=$22
 @dst=$24
+	jsr clear
 	dec worldy
 	jsr seed
 

@@ -5,6 +5,7 @@
 
 .export __sprite_on
 .export __sprite_off
+.export __sprite_clear
 
 .import charset
 sprites=charset
@@ -232,7 +233,7 @@ putsprite:
 .endproc
 
 ;--------------------------------------
-.proc __sprite_offall
+.proc __sprite_clear
 	lda #$ff
 	ldx #MAX_SPRITES-1
 @l0:	sta allocated_sprites,x
@@ -247,6 +248,7 @@ putsprite:
 
 	rts
 .endproc
+
 
 ;--------------------------------------
 ; plotchar draws .A at (.X, .Y).
