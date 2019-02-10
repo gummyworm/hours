@@ -3,6 +3,7 @@ CONSTANTS_INC = 1
 
 ; gameplay constants
 SWINGING_TIME = 20	; frames to swing player weapon upon FIRE
+MAX_ENEMIES = 4
 
 IRQ_RASTER_START = $63
 IRQ_RASTER_END = IRQ_RASTER_START+16

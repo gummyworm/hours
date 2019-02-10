@@ -84,4 +84,5 @@ splitirq:
 	lda #$00
 	sta nextframe
 	jmp $eabf
+
 nextframe: .byte 0

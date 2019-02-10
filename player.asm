@@ -155,7 +155,7 @@ hp: .byte 3+1
 @updateplayer:
 	ldx xpos
 	ldy ypos
-	jsr canmove
+	jsr screen::canmove
 	beq @redrawplayer
 @stay:	ldx prevx
 	ldy prevy
@@ -186,26 +186,6 @@ hp: .byte 3+1
 	sty prevy
 	lda #PLAYER
 	jmp sprite::on
-.endproc
-
-;--------------------------------------
-.proc canmove
-	jsr screen::getchar
-	lda ($f0),y
-	cmp #BLANK
-	bne @no
-	iny
-	lda ($f0),y
-	cmp #BLANK
-	bne @no
-	ldy #SCREEN_W
-	lda ($f0),y
-	cmp #BLANK
-	bne @no
-	iny
-	lda ($f0),y
-	cmp #BLANK
-@no:	rts
 .endproc
 
 ;--------------------------------------

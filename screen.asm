@@ -1,6 +1,7 @@
 .CODE
 
 .export __screen_getchar
+.export __screen_canmove
 
 .include "constants.inc"
 
@@ -33,3 +34,26 @@
 	lda ($f0),y
 	rts
 .endproc
+
+;--------------------------------------
+; canmove returns .Z set if the character in (.X,.Y) can
+; be occupied.
+.proc __screen_canmove
+	jsr __screen_getchar
+	lda ($f0),y
+	cmp #BLANK
+	bne @no
+	iny
+	lda ($f0),y
+	cmp #BLANK
+	bne @no
+	ldy #SCREEN_W
+	lda ($f0),y
+	cmp #BLANK
+	bne @no
+	iny
+	lda ($f0),y
+	cmp #BLANK
+@no:	rts
+.endproc
+
