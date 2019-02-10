@@ -2,6 +2,7 @@
 
 .export __screen_getchar
 .export __screen_canmove
+.export __screen_move
 
 .include "constants.inc"
 
@@ -57,3 +58,39 @@
 @no:	rts
 .endproc
 
+;--------------------------------------
+; move updates the coordinates of (.X,.Y) by 1 step in the direction given in .A,
+; validates the move, and returns the updated coordinates.
+.proc __screen_move
+@x=$30
+@y=$31
+@prevx=$32
+@prevy=$33
+	stx @prevx
+	sty @prevy
+@left:	cmp #DIR_LEFT
+	bne @right
+	inx
+@right:	cmp #DIR_RIGHT
+	bne @up
+	dex
+@up:	cmp #DIR_UP
+	bne @down
+	dey
+@down:	cmp #DIR_DOWN
+	bne @check
+	iny
+@check:	stx @x
+	sty @y
+	jsr __screen_canmove
+	bne @stay
+@move:	ldx @x
+	ldy @y
+	sec
+	rts
+
+@stay:	ldx @prevx
+	ldy @prevy
+	clc
+	rts
+.endproc

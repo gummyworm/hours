@@ -13,7 +13,36 @@
 num:     .byte $ff		; number of enemies onscreen
 enemies: .res MAX_ENEMIES	; sprite (character) ID's
 hp:  	 .res MAX_ENEMIES	; health points of each enemy
-pos:     .res MAX_ENEMIES*2	; positions of each enemy
+xpos:    .res MAX_ENEMIES	; x-positions of each enemy
+ypos:    .res MAX_ENEMIES	; y-positions of each enemy
+dir:	 .res MAX_ENEMIES	; direction enemies are headed
+ai:	 .res MAX_ENEMIES	; AI routine to use for enemies
+
+;--------------------------------------
+; each pattern receives:
+;   .X/$fb: the enemy x-coord
+;   .Y/$fc: the enemy y-coord
+;   .A/$fd: the enemies direction
+; and returns:
+;   .X: the new enemy x-coord
+;   .Y: the new enemy y-coord
+;   .A: the new direction
+ai_patterns:
+.word change_on_hit
+
+;--------------------------------------
+.proc change_on_hit
+@xpos=$fb
+@ypos=$fc
+@dir=$fd
+	jsr screen::move
+	bcs :+
+	; change direction
+	inc @dir
+	lda @dir
+	and #$03
+:	rts
+.endproc
 
 ;--------------------------------------
 ; clear removes all enemies. Call this, e.g., during screen transition.
@@ -41,13 +70,10 @@ pos:     .res MAX_ENEMIES*2	; positions of each enemy
 	ldy num
 	pla
 	sta enemies,y
-	tya
-	asl
-	tay
 	lda @xpos
-	sta pos,y
+	sta xpos,y
 	lda @ypos
-	sta pos+1,y
+	sta ypos,y
 	rts
 .endproc
 
@@ -58,43 +84,50 @@ pos:     .res MAX_ENEMIES*2	; positions of each enemy
 @prevx=$f9
 @prevy=$fa
 @newx=$fb
-@newy=$fc
 	lda num
 	bmi @done
 	sta @cnt
 
 @l0:	ldx @cnt
-	lda pos,x
-	ldy pos+1,x
-	sta @prevx
+	lda xpos,x
+	ldy ypos,x
+	tax
+	stx @prevx
 	sty @prevy
 
-	ldx #$01
-	jsr rnd::num
-	adc @prevx
-	sta @newx
-	ldx #$01
-	jsr rnd::num
-	adc @prevy
-	sta @newy
-
-	ldx @prevx
-	ldy @prevy
+	; disable the sprite of the enemy at its old location
 	jsr sprite::off
 
-	ldx @newx
-	ldy @newy
-	jsr screen::canmove
-	beq @next
+	; move enemy according to its AI pattern
+	ldx @cnt
+	lda ai,x
+	asl
+	tax
+	lda ai_patterns,x
+	sta @ai
+	lda ai_patterns+1,x
+	sta @ai+1
+
+	; get the new (x,y) and direction of updated enemy
+	ldx @cnt
+	lda dir,x
 	ldx @prevx
 	ldy @prevy
+@ai=*+1
+	jsr $ffff
 	stx @newx
-	sty @newy
 
-@next:	ldx @cnt
+	; store new coordinates of sprite
+	ldx @cnt
+	sta dir,x
+	tya
+	sta ypos,x
+	lda @newx
+	sta xpos,x
+
+	; redraw enemy at its new location
 	lda enemies,x
 	ldx @newx
-	ldy @newy
 	jsr sprite::on
 	dec @cnt
 	bpl @l0
