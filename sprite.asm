@@ -144,7 +144,8 @@ putsprite:
 	beq @found
 	dex
 	bpl :-
-	bmi *			; TODO: error (too many sprites drawn)
+	inc $900f
+	bmi *-3			; TODO: error (too many sprites drawn)
 
 @found:	pla
 	sta backup_buffer,x	; save the character that is being clobbered

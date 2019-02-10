@@ -1,4 +1,5 @@
 .include "constants.inc"
+.include "enemy.inc"
 .include "irq.inc"
 .include "joy.inc"
 .include "gen.inc"
@@ -48,6 +49,10 @@ start:
 .CODE
 enter:
 	jsr gen::screen
+	ldx #40
+	ldy #20
+	lda #EYE
+	jsr enemy::spawn
 
 initui:
 	ldx #<splitirq
@@ -61,6 +66,7 @@ initui:
 main:	lda nextframe
 	bne main
 	jsr player::update
+	jsr enemy::update
 	inc nextframe
 	jmp main
 

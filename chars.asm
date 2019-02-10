@@ -14,6 +14,9 @@ charset:
 .byte  0,0,2,170,170,170,2,0		; sword LEFT
 .byte  0,128,170,170,170,128,0,0	; sword RIGHT
 
+; enemies
+.byte  40,170,150,190,190,190,150,40	; eye
+
 .byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
 
 

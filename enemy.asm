@@ -5,11 +5,12 @@
 .include "screen.inc"
 .include "sprite.inc"
 
-.export __enemy_spawn
 .export __enemy_clear
+.export __enemy_spawn
+.export __enemy_update
 
 ;--------------------------------------
-num:     .byte 0		; number of enemies onscreen
+num:     .byte $ff		; number of enemies onscreen
 enemies: .res MAX_ENEMIES	; sprite (character) ID's
 hp:  	 .res MAX_ENEMIES	; health points of each enemy
 pos:     .res MAX_ENEMIES*2	; positions of each enemy
@@ -18,7 +19,7 @@ pos:     .res MAX_ENEMIES*2	; positions of each enemy
 ; clear removes all enemies. Call this, e.g., during screen transition.
 ; clear
 .proc __enemy_clear
-	lda #$00
+	lda #$ff
 	sta num
 	rts
 .endproc
@@ -36,6 +37,7 @@ pos:     .res MAX_ENEMIES*2	; positions of each enemy
 	jsr sprite::on
 
 	; set variables for this enemy
+	inc num
 	ldy num
 	pla
 	sta enemies,y
@@ -45,55 +47,56 @@ pos:     .res MAX_ENEMIES*2	; positions of each enemy
 	lda @xpos
 	sta pos,y
 	lda @ypos
-	sta pos+1
-	inc num
+	sta pos+1,y
 	rts
 .endproc
 
 ;--------------------------------------
 ; update updates all active enemies
 .proc __enemy_update
-@cnt=$10
-@prevx=$11
-@prevy=$12
-@newx=$13
-@newy=$14
+@cnt=$f8
+@prevx=$f9
+@prevy=$fa
+@newx=$fb
+@newy=$fc
 	lda num
-	beq @done
+	bmi @done
 	sta @cnt
 
 @l0:	ldx @cnt
-	ldy pos+1,x
 	lda pos,x
-	tax
+	ldy pos+1,x
+	sta @prevx
 	sty @prevy
-	stx @prevx
 
-	ldx #$00
+	ldx #$01
 	jsr rnd::num
 	adc @prevx
 	sta @newx
-	ldx #$00
+	ldx #$01
 	jsr rnd::num
 	adc @prevy
 	sta @newy
 
-	tay
-	ldx @newx
-
-	jsr screen::canmove
-	bne @next
 	ldx @prevx
 	ldy @prevy
 	jsr sprite::off
 
-	ldx @cnt
+	ldx @newx
+	ldy @newy
+	jsr screen::canmove
+	beq @next
+	ldx @prevx
+	ldy @prevy
+	stx @newx
+	sty @newy
+
+@next:	ldx @cnt
 	lda enemies,x
 	ldx @newx
 	ldy @newy
 	jsr sprite::on
-
-@next:	dec @cnt
+	dec @cnt
 	bpl @l0
 
 @done:	rts
