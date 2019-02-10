@@ -29,7 +29,7 @@ start:
 	bne :-
 
 	; bottom row(s) are not multicolor
-	lda #$00|$00
+	lda #$02
 	ldx #SCREEN_W*2
 :	sta COLORMEM+(SCREEN_W*(SCREEN_H)),x
 	dex
@@ -48,8 +48,6 @@ start:
 .CODE
 enter:
 	jsr gen::screen
-	jsr player::off
-	jsr player::on
 
 initui:
 	ldx #<splitirq
@@ -67,16 +65,23 @@ main:	lda nextframe
 	jmp main
 
 splitirq:
+	sync
 	; wait for 8 raster lines
 	lda #$f0
 	sta $9005
-	lda #IRQ_RASTER_END
-:	cmp $9004
-	bne :-
+	lda #$08
+	sta $900f
+	lda #$00
+
+	; TODO: plenty of raster time here
+	lda $9004
+	bne *-3
+
 	lda #$ff
 	sta $9005
+	lda #(BORDER_COLOR | (BG_COLOR << 4))|$08
+	sta $900f
 	lda #$00
 	sta nextframe
 	jmp $eabf
-
 nextframe: .byte 0

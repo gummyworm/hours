@@ -11,7 +11,7 @@ sprites=charset
 
 ;--------------------------------------
 allocated_sprites: .res MAX_SPRITES,$ff
-backup_buffer: 	   .res MAX_SPRITES
+backup_buffer: 	   .res MAX_SPRITES,BLANK
 
 ;--------------------------------------
 ; on puts a sprite from the character table at index .A into a sprite at

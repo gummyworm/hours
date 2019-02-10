@@ -42,7 +42,7 @@ hp: .byte 3+1
 	rts
 :	cpx hp
 	bcs @l0
-	lda #$d3
+	lda #$53
 	bne @l0
 .endproc
 
