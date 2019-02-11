@@ -164,10 +164,6 @@ hp: .byte 3+1
 
 @redrawplayer:
 	jsr __player_on
-	ldx xpos
-	ldy ypos
-	lda #PLAYER
-	jsr sprite::on
 @done:	rts
 .endproc
 
@@ -185,6 +181,8 @@ hp: .byte 3+1
 	stx prevx
 	sty prevy
 	lda #PLAYER
+	clc
+	adc dir
 	jmp sprite::on
 .endproc
 
@@ -205,7 +203,6 @@ hp: .byte 3+1
 	sec
 	sbc #8
 	sta swordy
-	lda #SWORD_U
 	jmp @done
 
 @down: 	cmp #DIR_DOWN
@@ -214,7 +211,6 @@ hp: .byte 3+1
 	clc
 	adc #8
 	sta swordy
-	lda #SWORD_D
 	jmp @done
 
 @left:	cmp #DIR_LEFT
@@ -223,7 +219,6 @@ hp: .byte 3+1
 	sec
 	sbc #8
 	sta swordx
-	lda #SWORD_L
 	jmp @done
 
 @right:	cmp #DIR_RIGHT
@@ -232,11 +227,13 @@ hp: .byte 3+1
 	clc
 	adc #8
 	sta swordx
-	lda #SWORD_R
 	jmp @done
 
 @done:	ldx swordx
 	ldy swordy
+	lda dir
+	clc
+	adc #SWORD
 	jsr sprite::on
 	lda #SWINGING_TIME
 	sta swinging
