@@ -15,7 +15,7 @@ enemies: .res MAX_ENEMIES	; sprite (character) ID's
 hp:  	 .res MAX_ENEMIES	; health points of each enemy
 xpos:    .res MAX_ENEMIES	; x-positions of each enemy
 ypos:    .res MAX_ENEMIES	; y-positions of each enemy
-dir:	 .res MAX_ENEMIES	; direction enemies are headed
+dir:	 .res MAX_ENEMIES,0	; direction enemies are headed
 ai:	 .res MAX_ENEMIES	; AI routine to use for enemies
 
 ;--------------------------------------
@@ -35,7 +35,9 @@ ai_patterns:
 @xpos=$fb
 @ypos=$fc
 @dir=$fd
+	pha
 	jsr screen::move
+	pla
 	bcs :+
 	; change direction
 	inc @dir

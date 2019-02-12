@@ -53,12 +53,13 @@ hp: .byte 3+1
 	lda swinging
 	beq :+
 	dec swinging
-	bne :+
+	bne @inputdone
 	ldx swordx
 	ldy swordy
 	jsr sprite::off
 	lda #$01
 	.byte $2c
+
 :	lda #$00
 	sta @dirty
 	jsr joy::init

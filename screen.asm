@@ -29,7 +29,8 @@
 	adc #SCREEN_W
 	bcc @l0
 	inc $f0+1
-	jmp @l0
+	bne @l0
+
 @get:	sta $f0
 	ldy #$00
 	lda ($f0),y
@@ -40,9 +41,14 @@
 ; canmove returns .Z set if the character in (.X,.Y) can
 ; be occupied.
 .proc __screen_canmove
+	cpx #(SCREEN_W*8)-8
+	bcs @no	; value is negative or off right edge of screen
+	cpy #(SCREEN_H*8)-8
+	bcs @no
+
 	jsr __screen_getchar
-	lda ($f0),y
 	cmp #BLANK
+	rts
 	bne @no
 	iny
 	lda ($f0),y
@@ -70,10 +76,10 @@
 	sty @prevy
 @left:	cmp #DIR_LEFT
 	bne @right
-	inx
+	dex
 @right:	cmp #DIR_RIGHT
 	bne @up
-	dex
+	inx
 @up:	cmp #DIR_UP
 	bne @down
 	dey
