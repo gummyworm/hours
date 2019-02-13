@@ -48,7 +48,6 @@
 
 	jsr __screen_getchar
 	cmp #BLANK
-	rts
 	bne @no
 	iny
 	lda ($f0),y

@@ -1,6 +1,7 @@
 .CODE
 
 .include "constants.inc"
+.include "player.inc"
 .include "rand.inc"
 .include "screen.inc"
 .include "sprite.inc"
@@ -16,7 +17,7 @@ hp:  	 .res MAX_ENEMIES	; health points of each enemy
 xpos:    .res MAX_ENEMIES	; x-positions of each enemy
 ypos:    .res MAX_ENEMIES	; y-positions of each enemy
 dir:	 .res MAX_ENEMIES,0	; direction enemies are headed
-ai:	 .res MAX_ENEMIES	; AI routine to use for enemies
+ai:	 .res MAX_ENEMIES,0	; AI routine to use for enemies
 
 ;--------------------------------------
 ; each pattern receives:
@@ -29,11 +30,12 @@ ai:	 .res MAX_ENEMIES	; AI routine to use for enemies
 ;   .A: the new direction
 ai_patterns:
 .word change_on_hit
+.word wander_toward_player
 
 ;--------------------------------------
 .proc change_on_hit
-@xpos=$fb
-@ypos=$fc
+@xpos=$f9
+@ypos=$fa
 @dir=$fd
 	pha
 	jsr screen::move
@@ -44,6 +46,23 @@ ai_patterns:
 	lda @dir
 	and #$03
 :	rts
+.endproc
+
+;--------------------------------------
+.proc wander_toward_player
+@xpos=$f9
+@ypos=$fa
+@dir=$fd
+	ldx #2
+	jsr rnd::num
+	ldx @xpos
+	ldy @ypos
+	cmp #$00
+	bne :+
+	jsr player::dirto	; move toward player
+	.byte $2c
+:	lda @dir	; keep moving in same direction
+	jmp screen::move
 .endproc
 
 ;--------------------------------------
@@ -86,6 +105,7 @@ ai_patterns:
 @prevx=$f9
 @prevy=$fa
 @newx=$fb
+@dir=$fd
 	lda num
 	bmi @done
 	sta @cnt
@@ -113,6 +133,7 @@ ai_patterns:
 	; get the new (x,y) and direction of updated enemy
 	ldx @cnt
 	lda dir,x
+	sta @dir
 	ldx @prevx
 	ldy @prevy
 @ai=*+1

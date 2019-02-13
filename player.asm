@@ -10,6 +10,7 @@
 .export __player_on
 .export __player_off
 .export __player_harm
+.export __player_dirto
 
 ;--------------------------------------
 xpos: .byte 30
@@ -238,5 +239,23 @@ hp: .byte 3+1
 	jsr sprite::on
 	lda #SWINGING_TIME
 	sta swinging
+	rts
+.endproc
+
+;--------------------------------------
+; dirto returns a direction toward the player from (.X, .Y)
+.proc __player_dirto
+	cpx xpos
+	beq @chky
+	bcc :+
+	lda #DIR_LEFT
+	rts
+:	lda #DIR_RIGHT
+	rts
+@chky:	cpy ypos
+	bcc :+
+	lda #DIR_UP
+	rts
+:	lda #DIR_DOWN
 	rts
 .endproc

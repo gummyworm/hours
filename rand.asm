@@ -5,7 +5,8 @@
 
 __rnd_seed: .word 2019
 
-; generate 1 random byte between 0 and 2^(.X)
+;--------------------------------------
+; num returns 1 random byte between 0 and 2^(.X). Z is set if the number is 0
 .proc __rnd_num
 @result=$f0
 	lda #$00
