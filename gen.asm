@@ -1,6 +1,5 @@
 .CODE
 
-
 .export __gen_screen
 .export __gen_char
 .export __gen_scrollr

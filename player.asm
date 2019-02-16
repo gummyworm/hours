@@ -11,10 +11,16 @@
 .export __player_off
 .export __player_harm
 .export __player_dirto
+.export __player_xpos
+.export __player_ypos
 
 ;--------------------------------------
+__player_xpos:
 xpos: .byte 30
+
+__player_ypos:
 ypos: .byte 50
+
 dir: .byte 0
 prevx: .byte 0
 prevy: .byte 0
@@ -22,21 +28,32 @@ swordx: .byte 0
 swordy: .byte 0
 swinging: .byte 0
 hp: .byte 3+1
+iframes: .byte 0
+knockframes: .byte 0	; frames to knock back player
 
 ;--------------------------------------
-; deal .A points of damage to player
+; harm deals .A points of damage to player, knocks the player back, and grants
+; temporary invlunerability
 .proc __player_harm
-	sta $f0
+	ldx iframes
+	beq :+
+	rts
+
+:	sta $f0
 	lda hp
 	sec
 	sbc $f0
 	sta hp
 	bcs @updateui
 
+	lda #4
+	sta knockframes
+
 @die:	inc $900f
 	jmp *-3
 @updateui:
 	lda #' '
+	ldx #SCREEN_W-1
 @l0:	sta SCREEN+(HEALTH_ROW*SCREEN_W),x
 	dex
 	bpl :+
@@ -51,8 +68,28 @@ hp: .byte 3+1
 ; update handles joystick input and updates the player accordingly.
 .proc __player_update
 @dirty=$f0
+	lda iframes
+	beq @swing
+	dec iframes
+@knockback:
+	lda knockframes
+	beq @swing
+	dec knockframes
+
+@doknockback:
+	jsr __player_off
+	lda dir
+	ldx xpos
+	ldy ypos
+	jsr screen::move
+	stx xpos
+	sty ypos
+	jmp @redrawplayer
+
+@swing:
 	lda swinging
-	beq :+
+	beq @input
+@stopswing:
 	dec swinging
 	bne @inputdone
 	ldx swordx
@@ -60,8 +97,8 @@ hp: .byte 3+1
 	jsr sprite::off
 	lda #$01
 	.byte $2c
-
-:	lda #$00
+@input:
+	lda #$00
 	sta @dirty
 	jsr joy::init
 

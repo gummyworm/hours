@@ -3,8 +3,12 @@
 .import __player_off
 .import __player_harm
 .import __player_dirto
+.import __player_xpos
+.import __player_ypos
 
 .scope player
+	xpos = __player_xpos
+	ypos = __player_ypos
 	update = __player_update
 	on = __player_on
 	off = __player_off

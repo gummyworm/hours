@@ -66,6 +66,46 @@ ai_patterns:
 .endproc
 
 ;--------------------------------------
+.proc check_player_collision
+@pright=$f0
+@pbot=$f1
+@eright=$f2
+@ebot=$f3
+	lda player::xpos
+	clc
+	adc #8
+	sta @pright
+	lda player::ypos
+	adc #8
+	sta @pbot
+
+	txa
+	adc #8
+	sta @eright
+	tya
+	adc #8
+	sta @ebot
+
+	cpx @pright
+	bcs @nohit
+	cpy @pbot
+	bcs @nohit
+
+	ldx @eright
+	ldy @ebot
+	cpx player::xpos
+	bcc @nohit
+	cpy player::ypos
+	bcc @nohit
+
+@hit:	lda #1
+	jsr player::harm
+
+@nohit:	rts
+
+.endproc
+
+;--------------------------------------
 ; clear removes all enemies. Call this, e.g., during screen transition.
 ; clear
 .proc __enemy_clear
@@ -105,6 +145,7 @@ ai_patterns:
 @prevx=$f9
 @prevy=$fa
 @newx=$fb
+@newy=$fc
 @dir=$fd
 	lda num
 	bmi @done
@@ -139,6 +180,7 @@ ai_patterns:
 @ai=*+1
 	jsr $ffff
 	stx @newx
+	sty @newy
 
 	; store new coordinates of sprite
 	ldx @cnt
@@ -152,6 +194,9 @@ ai_patterns:
 	lda enemies,x
 	ldx @newx
 	jsr sprite::on
+	ldx @newx
+	ldy @newy
+	jsr check_player_collision
 	dec @cnt
 	bpl @l0
 
