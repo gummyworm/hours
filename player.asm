@@ -40,14 +40,16 @@ knockframes: .byte 0	; frames to knock back player
 	rts
 
 :	sta $f0
+	lda #4
+	sta knockframes
+	lda #60
+	sta iframes
+
 	lda hp
 	sec
 	sbc $f0
 	sta hp
 	bcs @updateui
-
-	lda #4
-	sta knockframes
 
 @die:	inc $900f
 	jmp *-3
@@ -79,6 +81,7 @@ knockframes: .byte 0	; frames to knock back player
 @doknockback:
 	jsr __player_off
 	lda dir
+	jsr screen::rvs
 	ldx xpos
 	ldy ypos
 	jsr screen::move

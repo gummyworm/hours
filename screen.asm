@@ -3,6 +3,7 @@
 .export __screen_getchar
 .export __screen_canmove
 .export __screen_move
+.export __screen_rvs
 
 .include "constants.inc"
 
@@ -98,4 +99,13 @@
 	ldy @prevy
 	clc
 	rts
+.endproc
+
+;--------------------------------------
+; __screen_rvs returns the direction opposite of the one provided in .A
+.proc __screen_rvs
+	tax
+	lda @rvstab,x
+	rts
+@rvstab: .byte DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT
 .endproc
