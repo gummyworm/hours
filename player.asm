@@ -1,6 +1,7 @@
 .CODE
 
 .include "constants.inc"
+.include "enemy.inc"
 .include "gen.inc"
 .include "joy.inc"
 .include "screen.inc"
@@ -93,6 +94,9 @@ knockframes: .byte 0	; frames to knock back player
 	lda swinging
 	beq @input
 @stopswing:
+	ldx swordx
+	ldy swordy
+	jsr enemy::collide
 	dec swinging
 	bne @inputdone
 	ldx swordx

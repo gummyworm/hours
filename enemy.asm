@@ -9,6 +9,7 @@
 .export __enemy_clear
 .export __enemy_spawn
 .export __enemy_update
+.export __enemy_collide
 
 ;--------------------------------------
 num:     .byte $ff		; number of enemies onscreen
@@ -18,6 +19,7 @@ xpos:    .res MAX_ENEMIES	; x-positions of each enemy
 ypos:    .res MAX_ENEMIES	; y-positions of each enemy
 dir:	 .res MAX_ENEMIES,0	; direction enemies are headed
 ai:	 .res MAX_ENEMIES,0	; AI routine to use for enemies
+knockback: .res MAX_ENEMIES	; frames to knockback
 
 ;--------------------------------------
 ; each pattern receives:
@@ -31,6 +33,12 @@ ai:	 .res MAX_ENEMIES,0	; AI routine to use for enemies
 ai_patterns:
 .word change_on_hit
 .word wander_toward_player
+
+;--------------------------------------
+.proc doknockback
+	jsr screen::rvs
+	jmp screen::move
+.endproc
 
 ;--------------------------------------
 .proc change_on_hit
@@ -102,7 +110,57 @@ ai_patterns:
 	jsr player::harm
 
 @nohit:	rts
+.endproc
 
+;--------------------------------------
+; collide checks collision with all enemies and harms those
+; that are colliding with the box (x,y)-(x+8,x+8).
+.proc __enemy_collide
+@left=$f0
+@right=$f1
+@top=$f2
+@bot=$f3
+@cnt=$f4
+	stx @left
+	txa
+	clc
+	adc #8
+	sta @right
+	tya
+	adc #8
+	sta @bot
+
+	ldx num
+	dex
+	stx @cnt
+	bmi @done
+@l0:	lda @right
+	cmp xpos,x
+	bcc @next
+	lda @left
+	cmp xpos,x
+	bcs @next
+
+	lda @bot
+	cmp ypos,x
+	bcc @next
+	tya
+	cmp ypos,x
+	bcs @next
+
+@hit:	dec hp,x
+	bne @knock
+@kill:	lda ypos,x
+	tay
+	lda xpos,x
+	tax
+	jsr sprite::off
+
+@knock:	lda #KNOCK_FRAMES
+	sta knockback,x
+@next:	dec @cnt
+	bpl @l0
+@done:	rts
 .endproc
 
 ;--------------------------------------
@@ -171,6 +229,14 @@ ai_patterns:
 	lda ai_patterns+1,x
 	sta @ai+1
 
+	lda knockback,x
+	beq @noknock
+	dec knockback,x
+@knockback:
+	jsr doknockback
+	jmp @updatepos
+
+@noknock:
 	; get the new (x,y) and direction of updated enemy
 	ldx @cnt
 	lda dir,x
@@ -179,6 +245,7 @@ ai_patterns:
 	ldy @prevy
 @ai=*+1
 	jsr $ffff
+@updatepos:
 	stx @newx
 	sty @newy
 
