@@ -50,8 +50,8 @@ start:
 .CODE
 enter:
 	;jsr gen::screen
-	ldx #40
-	ldy #20
+	ldx #SCREEN_W*8-15
+	ldy #90
 	lda #EYE
 	jsr enemy::spawn
 

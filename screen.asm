@@ -42,6 +42,10 @@
 ; canmove returns .Z set if the character in (.X,.Y) can
 ; be occupied.
 .proc __screen_canmove
+	cpx #$00
+	beq @no
+	cpy #$00
+	beq @no
 	cpx #(SCREEN_W*8)-8
 	bcs @no	; value is negative or off right edge of screen
 	cpy #(SCREEN_H*8)-8
@@ -61,7 +65,9 @@
 	iny
 	lda ($f0),y
 	cmp #BLANK
-@no:	rts
+	rts
+@no:	lda #$ff
+	rts
 .endproc
 
 ;--------------------------------------

@@ -32,12 +32,24 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 @dst3=$24	; start of 3rd sprite character - YSTART
 @dst4=$26	; start of 4th sprite character - YSTART
 @src=$28	; start of source UDG - YSTART
+@hclip=$2a
+@vclip=$2b
 	asl
 	asl
 	asl
 	sta @src
 
-	; calculate the start and stop values for .Y
+	lda #$00
+	sta @vclip
+	sta @hclip
+	cpy #SCREEN_H*8-8
+	bcc :+
+	inc @vclip
+:	cpx #SCREEN_W*8-8
+	bcc :+
+	inc @hclip
+
+:	; calculate the start and stop values for .Y
 	tya
 	and #$07
 	sta @ystart
@@ -92,6 +104,25 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 	sta @dst4+1
 	sta @src+1
 
+	lda @hclip
+	beq :+
+	jmp @clipx
+:	jmp @noclip
+
+; shift .A by @xshift pixels and put rollover in @nextcol
+@shiftx:
+	ldx #$00
+	stx @nextcol
+	ldx @xshift
+	beq :+
+@l2:	lsr
+	ror @nextcol
+	dex
+	bne @l2
+:	rts
+
+;--------------------------------------
+@noclip:
 	; blit chars 1 and 2
 	ldy @ystart
 @l0:	lda (@src),y
@@ -118,17 +149,26 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 	bcc @l1
 	rts
 
-; shift .A by @xshift pixels and put rollover in @nextcol
-@shiftx:
-	ldx #$00
-	stx @nextcol
-	ldx @xshift
-	beq :+
-@l2:	lsr
-	ror @nextcol
-	dex
-	bne @l2
-:	rts
+;--------------------------------------
+@clipx:
+	; blit char 1
+	ldy @ystart
+@l3:	lda (@src),y
+	jsr @shiftx
+	ora (@dst),y
+	sta (@dst),y
+	iny
+	cpy #$08
+	bcc @l3
+	; blit char 3
+@l4:	lda (@src),y
+	jsr @shiftx
+	ora (@dst3),y
+	sta (@dst3),y
+	iny
+	cpy @ystop
+	bcc @l4
+	rts
 
 ;--------------------------------------
 ; putsprite finds the next available sprite slot and places it to the
