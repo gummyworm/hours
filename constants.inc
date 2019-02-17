@@ -4,6 +4,8 @@ CONSTANTS_INC = 1
 ; gameplay constants
 SWINGING_TIME = 20	; frames to swing player weapon upon FIRE
 MAX_ENEMIES = 4
+IFRAMES = 60	; frames of invulnerability after taking damage
+KNOCK_FRAMES = 10 ; # of frames to recoil upon taking damage
 
 IRQ_RASTER_START = $63
 IRQ_RASTER_END = IRQ_RASTER_START+16

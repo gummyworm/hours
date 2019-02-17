@@ -73,17 +73,17 @@ ai_patterns:
 @ebot=$f3
 	lda player::xpos
 	clc
-	adc #8
+	adc #9
 	sta @pright
 	lda player::ypos
-	adc #8
+	adc #9
 	sta @pbot
 
 	txa
-	adc #8
+	adc #9
 	sta @eright
 	tya
-	adc #8
+	adc #9
 	sta @ebot
 
 	cpx @pright

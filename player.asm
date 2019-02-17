@@ -40,9 +40,9 @@ knockframes: .byte 0	; frames to knock back player
 	rts
 
 :	sta $f0
-	lda #4
+	lda #KNOCK_FRAMES
 	sta knockframes
-	lda #60
+	lda #IFRAMES
 	sta iframes
 
 	lda hp
