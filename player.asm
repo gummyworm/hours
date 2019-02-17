@@ -5,6 +5,7 @@
 .include "gen.inc"
 .include "joy.inc"
 .include "screen.inc"
+.include "sound.inc"
 .include "sprite.inc"
 
 .export __player_update
@@ -50,7 +51,8 @@ knockframes: .byte 0	; frames to knock back player
 	sec
 	sbc $f0
 	sta hp
-	bcs @updateui
+	jsr sfx::hit
+	jmp @updateui
 
 @die:	inc $900f
 	jmp *-3
@@ -85,6 +87,9 @@ knockframes: .byte 0	; frames to knock back player
 	jsr screen::rvs
 	ldx xpos
 	ldy ypos
+	jsr screen::move
+	lda dir
+	jsr screen::rvs
 	jsr screen::move
 	stx xpos
 	sty ypos

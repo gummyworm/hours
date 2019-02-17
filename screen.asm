@@ -104,8 +104,11 @@
 ;--------------------------------------
 ; __screen_rvs returns the direction opposite of the one provided in .A
 .proc __screen_rvs
+	stx @savex
 	tax
 	lda @rvstab,x
+@savex=*+1
+	ldx #$00
 	rts
 @rvstab: .byte DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT
 .endproc

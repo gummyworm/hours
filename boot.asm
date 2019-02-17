@@ -6,6 +6,7 @@
 .include "rand.inc"
 .include "player.inc"
 .include "screen.inc"
+.include "sound.inc"
 .include "sprite.inc"
 
 .segment "HEADER"
@@ -41,14 +42,14 @@ start:
 	sta $9005
 	lda #(BORDER_COLOR | (BG_COLOR << 4))|$08
 	sta $900f
-	lda #(AUX_COLOR << 4)
+	lda #(AUX_COLOR << 4) | 8
 	sta $900e
 	jmp enter
 	sei
 
 .CODE
 enter:
-	jsr gen::screen
+	;jsr gen::screen
 	ldx #40
 	ldy #20
 	lda #EYE
@@ -79,6 +80,7 @@ splitirq:
 	sta $900f
 	lda #$00
 
+	jsr snd::update
 	; TODO: plenty of raster time here
 	lda $9004
 	bne *-3
