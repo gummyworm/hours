@@ -52,19 +52,21 @@
 	bcs @no
 
 	jsr __screen_getchar
-	cmp #BLANK
-	bne @no
+	cmp #BLANK+1
+	bcs @no
 	iny
 	lda ($f0),y
-	cmp #BLANK
-	bne @no
+	cmp #BLANK+1
+	bcs @no
 	ldy #SCREEN_W
 	lda ($f0),y
-	cmp #BLANK
-	bne @no
+	cmp #BLANK+1
+	bcs @no
 	iny
 	lda ($f0),y
-	cmp #BLANK
+	cmp #BLANK+1
+	bcs @no
+	lda #$00
 	rts
 @no:	lda #$ff
 	rts
