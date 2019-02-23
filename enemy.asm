@@ -4,6 +4,7 @@
 .include "player.inc"
 .include "rand.inc"
 .include "screen.inc"
+.include "sound.inc"
 .include "sprite.inc"
 
 .export __enemy_clear
@@ -11,15 +12,18 @@
 .export __enemy_update
 .export __enemy_collide
 
+AI_KNOCKBACK=2
+
 ;--------------------------------------
-num:     .byte $ff		; number of enemies onscreen
+num:     .byte $ff		; number of enemies onscreen - 1
 enemies: .res MAX_ENEMIES	; sprite (character) ID's
-hp:  	 .res MAX_ENEMIES	; health points of each enemy
+hp:  	 .res MAX_ENEMIES,2	; health points of each enemy
 xpos:    .res MAX_ENEMIES	; x-positions of each enemy
 ypos:    .res MAX_ENEMIES	; y-positions of each enemy
 dir:	 .res MAX_ENEMIES,DIR_UP	; direction enemies are headed
 ai:	 .res MAX_ENEMIES,0	; AI routine to use for enemies
 knockback: .res MAX_ENEMIES	; frames to knockback
+iframes: .res MAX_ENEMIES,0	; invincibility frames
 
 ;--------------------------------------
 ; each pattern receives:
@@ -33,6 +37,7 @@ knockback: .res MAX_ENEMIES	; frames to knockback
 ai_patterns:
 .word change_on_hit
 .word wander_toward_player
+.word doknockback
 
 ;--------------------------------------
 .proc doknockback
@@ -116,11 +121,10 @@ ai_patterns:
 ; collide checks collision with all enemies and harms those
 ; that are colliding with the box (x,y)-(x+8,x+8).
 .proc __enemy_collide
-@left=$f0
-@right=$f1
-@top=$f2
-@bot=$f3
-@cnt=$f4
+@left=$30
+@right=$31
+@bot=$32
+@cnt=$33
 	stx @left
 	txa
 	clc
@@ -131,10 +135,16 @@ ai_patterns:
 	sta @bot
 
 	ldx num
-	dex
 	stx @cnt
 	bmi @done
-@l0:	lda @right
+
+@l0:	ldx @cnt
+	lda hp,x
+	beq @next	; dead, don't check collision
+	lda iframes,x
+	bne @next	; invincible, don't check collision
+
+	lda @right
 	cmp xpos,x
 	bcc @next
 	lda @left
@@ -155,11 +165,16 @@ ai_patterns:
 	lda xpos,x
 	tax
 	jsr sprite::off
+	jmp @next
 
 @knock:	lda #KNOCK_FRAMES
 	sta knockback,x
+	lda #IFRAMES
+	sta iframes,x
+	jsr sfx::hitenemy
 @next:	dec @cnt
 	bpl @l0
+
 @done:	rts
 .endproc
 
@@ -210,7 +225,14 @@ ai_patterns:
 	sta @cnt
 
 @l0:	ldx @cnt
-	lda xpos,x
+	lda hp,x
+	beq @next
+
+	lda iframes,x
+	beq :+
+	dec iframes,x
+
+:	lda xpos,x
 	ldy ypos,x
 	tax
 	stx @prevx
@@ -221,22 +243,20 @@ ai_patterns:
 
 	; move enemy according to its AI pattern
 	ldx @cnt
+	lda knockback,x
+	beq @noknock
+	ldx #AI_KNOCKBACK*2
+	bne @setpattern
+@noknock:
 	lda ai,x
 	asl
 	tax
+@setpattern:
 	lda ai_patterns,x
 	sta @ai
 	lda ai_patterns+1,x
 	sta @ai+1
 
-	lda knockback,x
-	beq @noknock
-	dec knockback,x
-@knockback:
-	jsr doknockback
-	jmp @updatepos
-
-@noknock:
 	; get the new (x,y) and direction of updated enemy
 	ldx @cnt
 	lda dir,x
@@ -257,14 +277,20 @@ ai_patterns:
 	lda @newx
 	sta xpos,x
 
+	; udate knockback tmr
+	lda knockback,x
+	beq @redraw
+	dec knockback,x
+
 	; redraw enemy at its new location
+@redraw:
 	lda enemies,x
 	ldx @newx
 	jsr sprite::on
 	ldx @newx
 	ldy @newy
 	jsr check_player_collision
-	dec @cnt
+@next:	dec @cnt
 	bpl @l0
 
 @done:	rts

@@ -49,7 +49,7 @@ start:
 
 .CODE
 enter:
-	jsr gen::screen
+	;jsr gen::screen
 	ldx #SCREEN_W*8-15
 	ldy #90
 	lda #EYE

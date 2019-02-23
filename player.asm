@@ -98,13 +98,14 @@ knockframes: .byte 0	; frames to knock back player
 @swing:
 	lda swinging
 	beq @input
-@stopswing:
+@swinging:
 	ldx swordx
 	ldy swordy
 	jsr enemy::collide
-	jsr sfx::hitenemy
 	dec swinging
 	bne @inputdone
+
+@stopswing:
 	ldx swordx
 	ldy swordy
 	jsr sprite::off
