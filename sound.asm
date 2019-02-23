@@ -5,6 +5,7 @@
 .export __sound_update
 
 .export __sfx_hit
+.export __sfx_hitenemy
 
 ;--------------------------------------
 cursfx: .word 0
@@ -25,9 +26,17 @@ sfx_hit:
 .byte 10, 128,195,131,100	; frames to hold sound and values for each voice
 @hitlen=*-sfx_hit+1
 
+sfx_hitenemy:
+.byte @hitenemylen
+.byte 10,0,00,131,140	; frames to hold sound and values for each voice
+@hitenemylen=*-sfx_hitenemy+1
+
 ;--------------------------------------
 __sfx_hit:
 	lda #$00
+	.byte $2c
+__sfx_hitenemy:
+	lda #$01
 	jmp __sound_sfx
 
 ;--------------------------------------

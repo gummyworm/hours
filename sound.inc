@@ -3,6 +3,7 @@
 .import __sound_update
 
 .import __sfx_hit
+.import __sfx_hitenemy
 
 .scope snd
 	sfx = __sound_sfx
@@ -12,4 +13,5 @@
 
 .scope sfx
 	hit = __sfx_hit
+	hitenemy = __sfx_hitenemy
 .endscope
