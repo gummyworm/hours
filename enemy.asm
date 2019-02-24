@@ -12,12 +12,14 @@
 .export __enemy_update
 .export __enemy_collide
 
+AI_CHANGE_ON_HIT=0
+AI_WANDER_TOWARD_PLAYER=1
 AI_KNOCKBACK=2
 
 ;--------------------------------------
 num:     .byte $ff		; number of enemies onscreen - 1
 enemies: .res MAX_ENEMIES	; sprite (character) ID's
-hp:  	 .res MAX_ENEMIES,2	; health points of each enemy
+hp:  	 .res MAX_ENEMIES,4	; health points of each enemy
 xpos:    .res MAX_ENEMIES	; x-positions of each enemy
 ypos:    .res MAX_ENEMIES	; y-positions of each enemy
 dir:	 .res MAX_ENEMIES,DIR_UP	; direction enemies are headed
@@ -41,8 +43,11 @@ ai_patterns:
 
 ;--------------------------------------
 .proc doknockback
+	pha
 	jsr screen::rvs
-	jmp screen::move
+	jsr screen::move
+	pla
+	rts
 .endproc
 
 ;--------------------------------------
@@ -99,11 +104,13 @@ ai_patterns:
 	adc #9
 	sta @ebot
 
+	; (x < right) && (y < bot)
 	cpx @pright
 	bcs @nohit
 	cpy @pbot
 	bcs @nohit
 
+	; (x+8 >= left) && (y+8 >= bot)
 	ldx @eright
 	ldy @ebot
 	cpx player::xpos
@@ -123,20 +130,22 @@ ai_patterns:
 .proc __enemy_collide
 @left=$30
 @right=$31
-@bot=$32
-@cnt=$33
+@top=$32
+@bot=$33
+@cnt=$34
 	stx @left
+	sty @top
 	txa
 	clc
-	adc #8
+	adc #9
 	sta @right
 	tya
-	adc #8
+	adc #9
 	sta @bot
 
 	ldx num
-	stx @cnt
 	bmi @done
+	stx @cnt
 
 @l0:	ldx @cnt
 	lda hp,x
@@ -144,19 +153,21 @@ ai_patterns:
 	lda iframes,x
 	bne @next	; invincible, don't check collision
 
-	lda @right
-	cmp xpos,x
-	bcc @next
-	lda @left
-	cmp xpos,x
+	; (x <= right) &&  (x+8 >= left)
+	lda xpos,x
+	cmp @right
 	bcs @next
+	adc #9
+	cmp @left
+	bcc @next
 
-	lda @bot
-	cmp ypos,x
-	bcc @next
-	tya
-	cmp ypos,x
+	; (y <= bot) && (y+8 >= top)
+	lda ypos,x
+	cmp @bot
 	bcs @next
+	adc #9
+	cmp @top
+	bcc @next
 
 @hit:	dec hp,x
 	bne @knock
@@ -167,7 +178,7 @@ ai_patterns:
 	jsr sprite::off
 	jmp @next
 
-@knock:	lda #KNOCK_FRAMES
+@knock:	lda #KNOCK_FRAMES*3
 	sta knockback,x
 	lda #IFRAMES
 	sta iframes,x
@@ -245,6 +256,7 @@ ai_patterns:
 	ldx @cnt
 	lda knockback,x
 	beq @noknock
+	dec knockback,x
 	ldx #AI_KNOCKBACK*2
 	bne @setpattern
 @noknock:
