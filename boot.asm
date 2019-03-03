@@ -45,21 +45,23 @@ start:
 	lda #(AUX_COLOR << 4) | 8
 	sta $900e
 	jmp enter
-	sei
 
 .CODE
 enter:
+	sei
+	lda #$00
+	jsr screen::buffer
 	;jsr gen::screen
 	ldx #SCREEN_W*8-15
 	ldy #90
 	lda #EYE
 	jsr enemy::spawn
-
-initui:
 	ldx #<splitirq
 	ldy #>splitirq
 	lda #IRQ_RASTER_START
 	jsr irq::raster
+
+initui:
 	lda #$01
 	jsr player::harm
 	jmp main
@@ -91,6 +93,13 @@ splitirq:
 	sta $900f
 	lda #$00
 	sta nextframe
-	jmp $eabf
+
+	bit $9124
+	pla
+	tay
+	pla
+	tax
+	pla
+	rti
 
 nextframe: .byte 0

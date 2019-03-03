@@ -6,6 +6,7 @@
 
 .export __sfx_hit
 .export __sfx_hitenemy
+.export __sfx_kill
 
 ;--------------------------------------
 cursfx: .word 0
@@ -19,6 +20,8 @@ tempo: .byte 0
 
 sfxtab:
 	.word sfx_hit
+	.word sfx_hitenemy
+	.word sfx_kill
 
 ;--------------------------------------
 sfx_hit:
@@ -28,8 +31,13 @@ sfx_hit:
 
 sfx_hitenemy:
 .byte @hitenemylen
-.byte 10,0,00,131,140	; frames to hold sound and values for each voice
+.byte 10, 0,0,131,140	; frames to hold sound and values for each voice
 @hitenemylen=*-sfx_hitenemy+1
+
+sfx_kill:
+.byte @killlen
+.byte 10, 0,0,131,140	; frames to hold sound and values for each voice
+@killlen=*-sfx_kill
 
 ;--------------------------------------
 __sfx_hit:
@@ -37,6 +45,8 @@ __sfx_hit:
 	.byte $2c
 __sfx_hitenemy:
 	lda #$01
+__sfx_kill:
+	lda #$02
 	jmp __sound_sfx
 
 ;--------------------------------------

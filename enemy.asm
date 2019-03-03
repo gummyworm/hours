@@ -45,6 +45,9 @@ ai_patterns:
 .proc doknockback
 	pha
 	jsr screen::rvs
+	pha
+	jsr screen::move
+	pla
 	jsr screen::move
 	pla
 	rts
@@ -176,6 +179,7 @@ ai_patterns:
 	lda xpos,x
 	tax
 	jsr sprite::off
+	jsr sfx::kill
 	jmp @next
 
 @knock:	lda #KNOCK_FRAMES*3

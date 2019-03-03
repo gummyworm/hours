@@ -9,8 +9,6 @@
 .macro sync
 	lda $9114     ; get the NMI timer A value
 	; (42 to 49 cycles delay at this stage)
-	ldy $9115     ; the reference timer on the screen
-	sty $1e01
 	cmp #8        ; are we more than 7 cycles ahead of time?
 	bcc @0
 	pha           ; yes, spend 8 extra cycles

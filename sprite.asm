@@ -69,24 +69,24 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 	; get the address of the 4 existing characters at the sprite's target
 	; location
 	jsr screen::getchar
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sta @dst
 
 	iny
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sta @dst2
 
 	ldy #SCREEN_W
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sec
 	sbc #8
 	sta @dst3
 
 	iny
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sec
 	sbc #8
@@ -172,7 +172,7 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 
 ;--------------------------------------
 ; putsprite finds the next available sprite slot and places it to the
-; screen @ ($f0),y.  The LSB of the allocated UDG is returned in .A
+; screen @ (GETCHAR_ADDR),y.  The LSB of the allocated UDG is returned in .A
 putsprite:
 	cmp #BLANK
 	bcc @done
@@ -195,7 +195,7 @@ putsprite:
 
 @copy:	pha
 	sty @ysave
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	asl
 	asl
 	asl
@@ -219,7 +219,7 @@ putsprite:
 	ldy #$00
 	pla
 
-@done:	sta ($f0),y
+@done:	sta (GETCHAR_ADDR),y
 	asl
 	asl
 	asl
@@ -230,42 +230,42 @@ putsprite:
 ; clear the sprite character(s) at the position in (.X,.Y)
 .proc __sprite_off
 	jsr screen::getchar
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
 	lda backup_buffer,x
-	sta ($f0),y
+	sta (GETCHAR_ADDR),y
 	lda #$ff
 	sta allocated_sprites,x
 
 	iny
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
 	bcs @row2
 	tax
 	lda backup_buffer,x
-	sta ($f0),y
+	sta (GETCHAR_ADDR),y
 	lda #$ff
 	sta allocated_sprites,x
 
 @row2:	ldy #SCREEN_W
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
 	lda backup_buffer,x
-	sta ($f0),y
+	sta (GETCHAR_ADDR),y
 	lda #$ff
 	sta allocated_sprites,x
 
 	iny
-	lda ($f0),y
+	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
 	lda backup_buffer,x
-	sta ($f0),y
+	sta (GETCHAR_ADDR),y
 	lda #$ff
 	sta allocated_sprites,x
 
@@ -296,7 +296,7 @@ putsprite:
 	pha
 	jsr screen::getchar
 	pla
-	sta ($f0),y
+	sta (GETCHAR_ADDR),y
 	rts
 .endproc
 
