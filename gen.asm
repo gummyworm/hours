@@ -61,7 +61,6 @@ worldy: .byte 2
 	jsr clear
 	jsr screen::iter_begin_topright
 	dec worldx
-	jsr seed
 
 	lda #SCREEN_W-1
 	sta @cnt
@@ -116,7 +115,6 @@ worldy: .byte 2
 	jsr clear
 	jsr screen::iter_begin_topleft
 	inc worldx
-	jsr seed
 
 	lda #SCREEN_W
 	sta @cnt
@@ -170,7 +168,6 @@ worldy: .byte 2
 @dst=$24
 	jsr clear
 	inc worldy
-	jsr seed
 
 	lda #SCREEN_H
 	sta @cnt
@@ -222,7 +219,7 @@ worldy: .byte 2
 @dst=$24
 	jsr clear
 	dec worldy
-	jsr seed
+	jsr screen::iter_begin_botright
 
 	lda #SCREEN_H
 	sta @cnt
@@ -259,10 +256,10 @@ worldy: .byte 2
 	dex
 	bne @l0
 
-	ldy #SCREEN_W-1
-@l2:	jsr __gen_char
-	sta SCREEN,y
-	dey
+	ldx #SCREEN_W-1
+@l2:	jsr screen::iter_rowmajor_neg_bot
+	sta SCREEN,x
+	dex
 	bpl @l2
 
 	dec @cnt
@@ -280,16 +277,6 @@ worldy: .byte 2
 	bpl @l3
 
 @done:	rts
-.endproc
-
-;--------------------------------------
-.proc seed
-	dec worldx
-	ldx worldx
-	ldy worldy
-	stx rnd::seed
-	sty rnd::seed+1
-	rts
 .endproc
 
 ;--------------------------------------

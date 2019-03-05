@@ -6,13 +6,17 @@
 .export __screen_canmove
 .export __screen_move
 .export __screen_rvs
+
 .export __screen_iter_begin_topleft
 .export __screen_iter_begin_topright
+.export __screen_iter_begin_botleft
+.export __screen_iter_begin_botright
 .export __screen_iter_done
 .export __screen_iter_rowmajor_pos
 .export __screen_iter_rowmajor_neg
 .export __screen_iter_colmajor_neg
 .export __screen_iter_colmajor_pos
+.export __screen_iter_rowmajor_neg_bot
 
 .include "constants.inc"
 
@@ -139,6 +143,8 @@ testroom:
 	.byte POINT,BLANK,0,4*8
 	.byte POINT,BLANK,0,5*8
 	.byte POINT,BLANK,0,6*8
+	.byte LINE,BLANK,10*8,0,12*8,0
+	.byte LINE,BLANK,10*8,(SCREEN_H-1)*8,12*8,(SCREEN_H-1)*8
 
 	.byte POINT,BLANK,(SCREEN_W-1)*8,4*8
 	.byte POINT,BLANK,(SCREEN_W-1)*8,5*8
@@ -293,8 +299,8 @@ screenaddr:
 .proc __screen_canmove
 	cpx #$fe
 	bcs @no
-	cpy #$00
-	beq @no
+	cpy #$fe
+	bcs @no
 	cpx #(SCREEN_W*8)-8
 	bcs @no	; value is negative or off right edge of screen
 	cpy #(SCREEN_H*8)-8
@@ -365,7 +371,6 @@ screenaddr:
 	sta iter+1
 	lda #$00
 	sta iter
-	sta __screen_iter_done
 	sta iter_colcnt
 	sta iter_rowcnt
 	rts
@@ -377,6 +382,34 @@ screenaddr:
 	lda #$94
 	sta iter+1
 	lda #SCREEN_W-1
+	sta iter
+	lda #SCREEN_W-1
+	sta iter_colcnt
+	lda #SCREEN_H-1
+	sta iter_rowcnt
+	rts
+.endproc
+
+;--------------------------------------
+; iter_begin_botright resets the screen iterator.
+.proc __screen_iter_begin_botright
+	lda #$95
+	sta iter+1
+	lda #<(SCREEN_W*SCREEN_H - 1)
+	sta iter
+	lda #SCREEN_W-1
+	sta iter_colcnt
+	lda #SCREEN_H-2
+	sta iter_rowcnt
+	rts
+.endproc
+
+;--------------------------------------
+; iter_begin_botleft resets the screen iterator.
+.proc __screen_iter_begin_botleft
+	lda #$95
+	sta iter+1
+	lda #<(SCREEN_W*SCREEN_H - SCREEN_W+1)
 	sta iter
 	lda #$00
 	sta __screen_iter_done
@@ -403,9 +436,6 @@ screenaddr:
 	lda iter+1
 	cmp #>(SCREEN_W*SCREEN_H)
 	bne @done
-
-@idone:	lda #$01
-	sta __screen_iter_done
 @done:	pla
 	rts
 .endproc
@@ -430,21 +460,26 @@ screenaddr:
 :	dec iter
 	lda iter
 	cmp #$ff
-	bne :+
+	bne @done
 	dec iter+1
-
-:	cmp #<(SCREEN_W*SCREEN_H-SCREEN_W)
-	bne @done
-	lda iter+1
-	cmp #$95
-	bne @done
-
-@idone:	lda #$01
-	sta __screen_iter_done
 
 @done:	pla
 	rts
 .endproc
+
+;--------------------------------------
+; iter_rowmajor_neg_bot returns characters from the color buffer beginning with
+; the top right, going right to left, then top to bottom
+.proc __screen_iter_rowmajor_neg_bot
+	jsr debuffer_char
+	pha
+	dec iter
+	bne @done
+	dec iter+1
+@done:	pla
+	rts
+.endproc
+
 
 ;--------------------------------------
 ; iter_colmajor_pos returns characters from the color buffer beginning with
@@ -463,7 +498,6 @@ screenaddr:
 	inc iter_colcnt
 	ldx iter_colcnt
 	cpx #SCREEN_W+1
-	beq @idone
 	stx iter
 	lda #$94
 	sta iter+1
@@ -478,8 +512,6 @@ screenaddr:
 	pla
 	rts
 
-@idone:	lda #$01
-	sta __screen_iter_done
 @done:	pla
 	rts
 .endproc
@@ -495,13 +527,9 @@ screenaddr:
 
 	lda #SCREEN_H-1
 	sta iter_rowcnt
-
 	dec iter_colcnt
-	ldx iter_colcnt
-	beq @idone
-
-	dex
-	stx iter
+	lda iter_colcnt
+	sta iter
 	lda #$94
 	sta iter+1
 	pla
@@ -512,11 +540,6 @@ screenaddr:
 	sta iter
 	bcc @done
 	inc iter+1
-	pla
-	rts
-
-@idone:	lda #$01
-	sta __screen_iter_done
 @done:	pla
 	rts
 .endproc
