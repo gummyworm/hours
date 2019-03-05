@@ -51,6 +51,7 @@ enter:
 	sei
 	lda #$00
 	jsr screen::buffer
+	jsr screen::flip
 	;jsr gen::screen
 	ldx #SCREEN_W*8-15
 	ldy #90

@@ -11,6 +11,7 @@
 .include "enemy.inc"
 .include "rand.inc"
 .include "sprite.inc"
+.include "screen.inc"
 
 worldx: .byte 2
 worldy: .byte 2
@@ -58,6 +59,7 @@ worldy: .byte 2
 @src=$22
 @dst=$24
 	jsr clear
+	jsr screen::iter_begin_topright
 	dec worldx
 	jsr seed
 
@@ -79,7 +81,8 @@ worldy: .byte 2
 	sta (@dst),y
 	dey
 	bne @l1
-	jsr __gen_char
+	jsr screen::iter_colmajor_neg
+	ldy #$00
 	sta (@dst),y
 
 	lda @src
@@ -101,7 +104,7 @@ worldy: .byte 2
 
 	dec @cnt
 	bne @scroll
-	rts
+@done:	rts
 .endproc
 
 ;--------------------------------------
@@ -111,6 +114,7 @@ worldy: .byte 2
 @src=$22
 @dst=$24
 	jsr clear
+	jsr screen::iter_begin_topleft
 	inc worldx
 	jsr seed
 
@@ -133,7 +137,8 @@ worldy: .byte 2
 	iny
 	cpy #SCREEN_W-1
 	bcc @l1
-	jsr __gen_char
+	jsr __screen_iter_colmajor_pos
+	ldy #SCREEN_W-1
 	sta (@dst),y
 
 	lda @src

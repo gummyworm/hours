@@ -1,17 +1,31 @@
 .CODE
 
 .export __screen_buffer
+.export __screen_flip
 .export __screen_getchar
 .export __screen_canmove
 .export __screen_move
 .export __screen_rvs
+.export __screen_iter_begin_topleft
+.export __screen_iter_begin_topright
+.export __screen_iter_done
+.export __screen_iter_rowmajor_pos
+.export __screen_iter_rowmajor_neg
+.export __screen_iter_colmajor_neg
+.export __screen_iter_colmajor_pos
 
 .include "constants.inc"
+
+__screen_iter_done: .byte 0
+iter = $66
+iter_rowcnt=$68
+iter_colcnt=$69
 
 ; display list constants
 END=0
 LINE=1
 BLOCK=2
+POINT=3
 
 ; addresses of the display lists for each room
 rooms:
@@ -22,10 +36,13 @@ instructiontab:
 	.word 0
 	.word line
 	.word block
+	.word point
+
 nargs:
 	.byte 0
 	.byte 5
 	.byte 5
+	.byte 3
 
 ;--------------------------------------
 ; line renders a line with the char $f4 from ($f3,$f2) to ($f1,$f0)
@@ -63,6 +80,18 @@ nargs:
 	cmp #$03
 	bne @l0
 	rts
+.endproc
+
+;--------------------------------------
+; point renders a single character ($f0) to ($f1,$f2)
+.proc point
+@ch=$f0
+@x0=$f1
+@y0=$f2
+	ldx @x0
+	ldy @y0
+	lda @ch
+	jmp bufferch
 .endproc
 
 ;--------------------------------------
@@ -106,6 +135,22 @@ testroom:
 	.byte LINE,TREE,21*8,0,20*8,(SCREEN_H-2)*8
 	.byte LINE,TREE,0,(SCREEN_H-1)*8,21*8,(SCREEN_H-1)*8
 	.byte BLOCK,TREE,(8*10),(8*8), (8*13),(12*8)
+	.byte POINT,BLANK,10*8,0
+	.byte POINT,BLANK,0,4*8
+	.byte POINT,BLANK,0,5*8
+	.byte POINT,BLANK,0,6*8
+
+	.byte POINT,BLANK,(SCREEN_W-1)*8,4*8
+	.byte POINT,BLANK,(SCREEN_W-1)*8,5*8
+	.byte POINT,BLANK,(SCREEN_W-1)*8,6*8
+	.byte END
+
+;--------------------------------------
+testroom2:
+	.byte LINE,TREE,0,0,21*8,0
+	.byte LINE,TREE,0,0,0,(SCREEN_H-2)*8
+	.byte LINE,TREE,21*8,0,20*8,(SCREEN_H-2)*8
+	.byte LINE,TREE,0,(SCREEN_H-1)*8,21*8,(SCREEN_H-1)*8
 	.byte END
 
 ;--------------------------------------
@@ -159,12 +204,55 @@ testroom:
 .endproc
 
 ;--------------------------------------
+; flip decompresses and renders the backbuffer ($9400) onto the display
+.proc __screen_flip
+@src=$f0
+@dst=$f2
+	ldx #<$9400
+	ldy #>$9400
+	stx @src
+	sty @src+1
+
+	ldx #<SCREEN
+	ldy #>SCREEN
+	stx @dst
+	sty @dst+1
+
+	ldx #SCREEN_H
+@l0:	ldy #SCREEN_W-1
+@l1:	lda (@src),y
+	and #$0f
+	adc #16
+	sta (@dst),y
+	dey
+	bpl @l1
+
+	lda @src
+	adc #SCREEN_W
+	sta @src
+	bcc :+
+	inc @src+1
+:	lda @dst
+	clc
+	adc #SCREEN_W
+	sta @dst
+	bcc :+
+	inc @dst+1
+:	dex
+	bne @l0
+	rts
+.endproc
+
+;--------------------------------------
 ; bufferch stores the character in .A at the screen buffer  in $9400
 bufferch:
 	pha
-	lda #$1e
+	lda #$94
 	jsr screenaddr
 	pla
+	; compress for storage in 4-bit RAM and save
+	sec
+	sbc #16
 	sta (GETCHAR_ADDR),y
 	rts
 
@@ -203,8 +291,8 @@ screenaddr:
 ; canmove returns .Z set if the character in (.X,.Y) can
 ; be occupied.
 .proc __screen_canmove
-	cpx #$00
-	beq @no
+	cpx #$fe
+	bcs @no
 	cpy #$00
 	beq @no
 	cpx #(SCREEN_W*8)-8
@@ -267,6 +355,179 @@ screenaddr:
 @stay:	ldx @prevx
 	ldy @prevy
 	clc
+	rts
+.endproc
+
+;--------------------------------------
+; iter_begin_topleft resets the screen iterator.
+.proc __screen_iter_begin_topleft
+	lda #$94
+	sta iter+1
+	lda #$00
+	sta iter
+	sta __screen_iter_done
+	sta iter_colcnt
+	sta iter_rowcnt
+	rts
+.endproc
+
+;--------------------------------------
+; iter_begin_topright resets the screen iterator.
+.proc __screen_iter_begin_topright
+	lda #$94
+	sta iter+1
+	lda #SCREEN_W-1
+	sta iter
+	lda #$00
+	sta __screen_iter_done
+	lda #SCREEN_W-1
+	sta iter_colcnt
+	lda #SCREEN_H-2
+	sta iter_rowcnt
+	rts
+.endproc
+
+;--------------------------------------
+; iter_rowmajor_pos returns characters from the color buffer beginning with
+; the top left, and increasing left to right, then top to bottom
+.proc __screen_iter_rowmajor_pos
+	jsr debuffer_char
+	pha
+	inc iter
+	bne :+
+	inc iter+1
+
+:	lda iter
+	cmp #<(SCREEN_W*SCREEN_H)
+	bne @done
+	lda iter+1
+	cmp #>(SCREEN_W*SCREEN_H)
+	bne @done
+
+@idone:	lda #$01
+	sta __screen_iter_done
+@done:	pla
+	rts
+.endproc
+
+;--------------------------------------
+; iter_rowmajor_neg returns characters from the color buffer beginning with
+; the top right, going right to left, then top to bottom
+.proc __screen_iter_rowmajor_neg
+	jsr debuffer_char
+	pha
+	dec iter_colcnt
+	bne :+
+
+	lda #SCREEN_W
+	sta iter_colcnt
+	lda iter
+	adc #SCREEN_W*2+1
+	sta iter
+	bcc :+
+	inc iter+1
+
+:	dec iter
+	lda iter
+	cmp #$ff
+	bne :+
+	dec iter+1
+
+:	cmp #<(SCREEN_W*SCREEN_H-SCREEN_W)
+	bne @done
+	lda iter+1
+	cmp #$95
+	bne @done
+
+@idone:	lda #$01
+	sta __screen_iter_done
+
+@done:	pla
+	rts
+.endproc
+
+;--------------------------------------
+; iter_colmajor_pos returns characters from the color buffer beginning with
+; the top right, going top down, then left to right
+.proc __screen_iter_colmajor_pos
+	jsr debuffer_char
+	pha
+	inc iter_rowcnt
+	lda iter_rowcnt
+	cmp #SCREEN_H-1
+	bcc :+
+
+	lda #$00
+	sta iter_rowcnt
+
+	inc iter_colcnt
+	ldx iter_colcnt
+	cpx #SCREEN_W+1
+	beq @idone
+	stx iter
+	lda #$94
+	sta iter+1
+	pla
+	rts
+
+:	lda iter
+	adc #SCREEN_W
+	sta iter
+	bcc @done
+	inc iter+1
+	pla
+	rts
+
+@idone:	lda #$01
+	sta __screen_iter_done
+@done:	pla
+	rts
+.endproc
+
+;--------------------------------------
+; iter_colmajor_neg returns characters from the color buffer beginning with
+; the top right, going top down, then right to left
+.proc __screen_iter_colmajor_neg
+	jsr debuffer_char
+	pha
+	dec iter_rowcnt
+	bne :+
+
+	lda #SCREEN_H-1
+	sta iter_rowcnt
+
+	dec iter_colcnt
+	ldx iter_colcnt
+	beq @idone
+
+	dex
+	stx iter
+	lda #$94
+	sta iter+1
+	pla
+	rts
+
+:	lda iter
+	adc #SCREEN_W
+	sta iter
+	bcc @done
+	inc iter+1
+	pla
+	rts
+
+@idone:	lda #$01
+	sta __screen_iter_done
+@done:	pla
+	rts
+.endproc
+
+;--------------------------------------
+.proc debuffer_char
+	ldy #$00
+	lda (iter),y
+	and #$0f
+	clc
+	adc #16
 	rts
 .endproc
 

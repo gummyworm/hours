@@ -135,6 +135,8 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 	iny
 	cpy #$08
 	bcc @l0
+	lda @ystart
+	beq @row2done
 
 	; blit chars 3 and 4
 @l1:	lda (@src),y
@@ -147,6 +149,7 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 	iny
 	cpy @ystop
 	bcc @l1
+@row2done:
 	rts
 
 ;--------------------------------------
@@ -160,6 +163,10 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 	iny
 	cpy #$08
 	bcc @l3
+
+	lda @ystart
+	beq @row2done
+
 	; blit char 3
 @l4:	lda (@src),y
 	jsr @shiftx
