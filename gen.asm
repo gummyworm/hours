@@ -1,7 +1,5 @@
 .CODE
 
-.export __gen_screen
-.export __gen_char
 .export __gen_scrollr
 .export __gen_scrolll
 .export __gen_scrollu
@@ -24,35 +22,6 @@ worldy: .byte 2
 .endproc
 
 ;--------------------------------------
-.proc __gen_screen
-	ldy #$ff
-@l0:	dey
-	beq @done
-	ldx #2
-	jsr rnd::num
-	tax
-	lda gentab,x
-	sta SCREEN,y
-	ldx #2
-	jsr rnd::num
-	tax
-	lda gentab,x
-	sta SCREEN+$100,y
-	jmp @l0
-@done:	rts
-.endproc
-
-;--------------------------------------
-; char generates a random character grom gentab
-.proc __gen_char
-	ldx #2
-	jsr rnd::num
-	tax
-	lda gentab,x
-	rts
-.endproc
-
-;--------------------------------------
 .proc __gen_scrolll
 @cnt=$20
 @cnt2=$26
@@ -62,47 +31,36 @@ worldy: .byte 2
 	jsr screen::iter_begin_topright
 	dec worldx
 
-	lda #SCREEN_W-1
+	lda #SCREEN_W
 	sta @cnt
-@scroll:
-	lda #<SCREEN+SCREEN_W
-	sta @dst
-	lda #<SCREEN+SCREEN_W-1
+
+@l0:	lda #<SCREEN
 	sta @src
 	lda #>SCREEN
 	sta @src+1
-	sta @dst+1
+	ldx #SCREEN_H
 
-	ldx #SCREEN_H-1
-	stx @cnt2
-@l0:	ldy #SCREEN_W-1
-@l1:	lda (@src),y
-	sta (@dst),y
+@l1:	ldy #SCREEN_W-2
+@l2:	lda (@src),y
+	iny
+	sta (@src),y
 	dey
-	bne @l1
+	dey
+	bpl @l2
 	jsr screen::iter_colmajor_neg
-	ldy #$00
-	sta (@dst),y
+	sta (@src),y
 
-	lda @src
+@next:	lda @src
 	clc
 	adc #SCREEN_W
 	sta @src
 	bcc :+
 	inc @src+1
-
-:	lda @dst
-	clc
-	adc #SCREEN_W
-	sta @dst
-	bcc :+
-	inc @dst+1
-
-:	dec @cnt2
+:	dex
+	bne @l1
+	dec @cnt
 	bne @l0
 
-	dec @cnt
-	bne @scroll
 @done:	rts
 .endproc
 
@@ -168,13 +126,15 @@ worldy: .byte 2
 @dst=$24
 	jsr clear
 	inc worldy
+	jsr screen::iter_begin_topleft
 
 	lda #SCREEN_H
 	sta @cnt
-@scroll: ldx #SCREEN_H
+@scroll:
+	ldx #SCREEN_H
 	lda #<SCREEN
 	sta @dst
-	lda #<(SCREEN+SCREEN_W)
+	lda #SCREEN_W
 	sta @src
 	lda #>SCREEN
 	sta @src+1
@@ -201,10 +161,10 @@ worldy: .byte 2
 :	dex
 	bne @l0
 
-	ldy #SCREEN_W
-@l2:	jsr __gen_char
-	sta SCREEN+(SCREEN_W*SCREEN_H-SCREEN_W),y
-	dey
+	ldx #SCREEN_W-1
+@l2:	jsr __screen_iter_rowmajor_pos
+	sta SCREEN+(SCREEN_W*SCREEN_H-SCREEN_W),x
+	dex
 	bpl @l2
 	dec @cnt
 
@@ -264,20 +224,6 @@ worldy: .byte 2
 
 	dec @cnt
 	bne @scroll
-
-	; if at the top of the world, make top row a barrier
-	lda worldy
-	cmp #1
-	bne @done
-	lda #TREE
-	ldy #SCREEN_W-1
-@l3:	lda #TREE
-	sta SCREEN,y
-	dey
-	bpl @l3
-
 @done:	rts
 .endproc
 
-;--------------------------------------
-gentab:	.byte BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,TREE

@@ -385,7 +385,7 @@ screenaddr:
 	sta iter
 	lda #SCREEN_W-1
 	sta iter_colcnt
-	lda #SCREEN_H-1
+	lda #SCREEN_H
 	sta iter_rowcnt
 	rts
 .endproc
@@ -525,7 +525,7 @@ screenaddr:
 	dec iter_rowcnt
 	bne :+
 
-	lda #SCREEN_H-1
+	lda #SCREEN_H
 	sta iter_rowcnt
 	dec iter_colcnt
 	lda iter_colcnt
