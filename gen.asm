@@ -161,11 +161,12 @@ worldy: .byte 2
 :	dex
 	bne @l0
 
-	ldx #SCREEN_W-1
+	ldx #$00
 @l2:	jsr __screen_iter_rowmajor_pos
 	sta SCREEN+(SCREEN_W*SCREEN_H-SCREEN_W),x
-	dex
-	bpl @l2
+	inx
+	cpx #SCREEN_W
+	bcc @l2
 	dec @cnt
 
 	bne @scroll
@@ -183,7 +184,8 @@ worldy: .byte 2
 
 	lda #SCREEN_H
 	sta @cnt
-@scroll: ldx #SCREEN_H
+@scroll:
+	ldx #SCREEN_H
 	lda #<(SCREEN+(SCREEN_W*SCREEN_H)-SCREEN_W)
 	sta @dst
 	lda #<(SCREEN+(SCREEN_W*SCREEN_H)-(SCREEN_W*2))

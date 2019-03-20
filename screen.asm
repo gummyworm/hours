@@ -474,6 +474,8 @@ screenaddr:
 	jsr debuffer_char
 	pha
 	dec iter
+	lda iter
+	cmp #$ff
 	bne @done
 	dec iter+1
 @done:	pla
