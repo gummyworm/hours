@@ -5,6 +5,7 @@
 .import __player_dirto
 .import __player_xpos
 .import __player_ypos
+.import __player_init
 
 .scope player
 	xpos = __player_xpos
@@ -14,4 +15,5 @@
 	off = __player_off
 	harm = __player_harm
 	dirto = __player_dirto
+	init = __player_init
 .endscope

@@ -1,18 +1,30 @@
-.CODE
-
 .include "constants.inc"
 .include "screen.inc"
 
 .export __sprite_on
 .export __sprite_off
 .export __sprite_clear
+.export __sprite_init
 
-.import charset
-sprites=charset
+sprites=CHARMEM
 
+.BSS
 ;--------------------------------------
-allocated_sprites: .res MAX_SPRITES,$ff
-backup_buffer: 	   .res MAX_SPRITES,BLANK
+allocated_sprites: .res MAX_SPRITES
+backup_buffer: 	   .res MAX_SPRITES
+
+.CODE
+;--------------------------------------
+.proc __sprite_init
+	ldx #MAX_SPRITES-1
+@l0:	lda #BLANK
+	sta backup_buffer,x
+	lda #$ff
+	sta allocated_sprites,x
+	dex
+	bpl @l0
+	rts
+.endproc
 
 ;--------------------------------------
 ; on puts a sprite from the character table at index .A into a sprite at
@@ -181,6 +193,8 @@ backup_buffer: 	   .res MAX_SPRITES,BLANK
 ; putsprite finds the next available sprite slot and places it to the
 ; screen @ (GETCHAR_ADDR),y.  The LSB of the allocated UDG is returned in .A
 putsprite:
+@ystop=$30
+@ysave=$31
 	cmp #BLANK
 	bcc @done
 	pha
@@ -218,12 +232,10 @@ putsprite:
 	sta sprites,x
 	inx
 	iny
-@ystop=*+1
-	cpy #$00
+	cpy @ystop
 	bne @l0
 
-@ysave=*+1
-	ldy #$00
+	ldy @ysave
 	pla
 
 @done:	sta (GETCHAR_ADDR),y

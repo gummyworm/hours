@@ -3,6 +3,7 @@
 .include "constants.inc"
 .include "enemy.inc"
 .include "gen.inc"
+.include "items.inc"
 .include "joy.inc"
 .include "screen.inc"
 .include "sound.inc"
@@ -15,33 +16,46 @@
 .export __player_dirto
 .export __player_xpos
 .export __player_ypos
+.export __player_init
 
+.BSS
 ;--------------------------------------
 __player_xpos:
-xpos: .byte 30
-
+xpos: .byte 0
 __player_ypos:
-ypos: .byte 50
-
-dir: .byte 0
-prevx: .byte 0
-prevy: .byte 0
+ypos:   .byte 0
+dir:    .byte 0
+prevx:  .byte 0
+prevy:  .byte 0
 swordx: .byte 0
 swordy: .byte 0
+hp:     .byte 0
 swinging: .byte 0
-hp: .byte 3+1
-iframes: .byte 0
+iframes:  .byte 0
 knockframes: .byte 0	; frames to knock back player
+
+.CODE
+;--------------------------------------
+.proc __player_init
+	lda #30
+	sta xpos
+	lda #50
+	sta ypos
+	lda #4
+	sta hp
+	rts
+.endproc
 
 ;--------------------------------------
 ; harm deals .A points of damage to player, knocks the player back, and grants
 ; temporary invlunerability
 .proc __player_harm
+@tmp=$f0
 	ldx iframes
 	beq :+
 	rts
 
-:	sta $f0
+:	sta @tmp
 	lda #KNOCK_FRAMES
 	sta knockframes
 	lda #IFRAMES
@@ -49,7 +63,7 @@ knockframes: .byte 0	; frames to knock back player
 
 	lda hp
 	sec
-	sbc $f0
+	sbc @tmp
 	sta hp
 	jsr sfx::hit
 	jmp @updateui
@@ -142,6 +156,12 @@ knockframes: .byte 0	; frames to knock back player
 
 @right: jsr joy::right
 	bne @fire
+	jsr joy::fire	; if fire is also pressed, advance item selection
+	bne @move
+
+	jsr item::selnext
+	rts
+@move:
 .ifdef MULTICOLOR
 	inc xpos
 .endif
@@ -210,6 +230,13 @@ knockframes: .byte 0	; frames to knock back player
 	ldy ypos
 	jsr screen::canmove
 	beq @redrawplayer
+	cmp #PICKUPS
+	bcc @stay
+@takeitem:
+	jsr item::add
+	lda #BLANK	; delete the item
+	sta (GETCHAR_ADDR),y
+
 @stay:	ldx prevx
 	ldy prevy
 	stx xpos
@@ -241,6 +268,15 @@ knockframes: .byte 0	; frames to knock back player
 
 ;--------------------------------------
 .proc action
+	jsr item::selected
+	cmp #SWORD_U
+	bne :+
+	jsr swing
+:	rts
+.endproc
+
+;--------------------------------------
+.proc swing
 	lda swinging
 	beq :+
 	rts

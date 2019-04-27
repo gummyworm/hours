@@ -4,6 +4,8 @@ CONSTANTS_INC = 1
 ; gameplay constants
 SWINGING_TIME = 20	; frames to swing player weapon upon FIRE
 MAX_ENEMIES = 4
+MAX_BULLETS = 4
+MAX_ITEMS = 6
 IFRAMES = 10	; frames of invulnerability after taking damage
 KNOCK_FRAMES = 10 ; # of frames to recoil upon taking damage
 
@@ -20,6 +22,8 @@ COLORMEM=$9600
 
 ; UI constants
 HEALTH_ROW = SCREEN_H
+ITEMS_ROW = SCREEN_H
+ITEMS_COL = 7
 
 ; if MULTICOLOR is defined, x-movement occurs in 2-pixel granularity
 MULTICOLOR = 1
@@ -38,6 +42,11 @@ SWORD_D = MAX_SPRITES+7
 SWORD_L = MAX_SPRITES+8
 SWORD_R = MAX_SPRITES+9
 EYE     = MAX_SPRITES+10
+SELECTION = MAX_SPRITES+6
+
+; characters above PICKUPS can be picked up by player
+PICKUPS = MAX_SPRITES+12
+ARROW = PICKUPS
 
 ; direction enum
 DIR_UP = 0

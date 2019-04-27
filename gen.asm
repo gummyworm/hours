@@ -1,19 +1,20 @@
-.CODE
-
-.export __gen_scrollr
-.export __gen_scrolll
-.export __gen_scrollu
-.export __gen_scrolld
-
 .include "constants.inc"
 .include "enemy.inc"
 .include "rand.inc"
 .include "sprite.inc"
 .include "screen.inc"
 
-worldx: .byte 2
-worldy: .byte 2
+.export __gen_scrollr
+.export __gen_scrolll
+.export __gen_scrollu
+.export __gen_scrolld
 
+.BSS
+;--------------------------------------
+worldx: .byte 0
+worldy: .byte 0
+
+.CODE
 ;--------------------------------------
 ; clear all enemies and sprites
 .proc clear

@@ -1,5 +1,3 @@
-.CODE
-
 .export __joy_init
 .export __joy_fire
 .export __joy_up
@@ -7,6 +5,7 @@
 .export __joy_left
 .export __joy_right
 
+.CODE
 ;--------------------------------------
 .proc __joy_init
         lda #$00

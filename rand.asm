@@ -1,10 +1,10 @@
-.CODE
-
 .export __rnd_num
 .export __rnd_seed
 
-__rnd_seed: .word 2019
+.BSS
+__rnd_seed: .word 0
 
+.CODE
 ;--------------------------------------
 ; num returns 1 random byte between 0 and 2^(.X). Z is set if the number is 0
 .proc __rnd_num

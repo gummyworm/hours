@@ -1,3 +1,4 @@
+.include "chars.inc"
 .include "constants.inc"
 .include "enemy.inc"
 .include "irq.inc"
@@ -8,19 +9,39 @@
 .include "screen.inc"
 .include "sound.inc"
 .include "sprite.inc"
+.include "items.inc"
 
-.segment "HEADER"
-	.word @head
-@head:	.word @next
-	.word 2019
-	.byte $9e
-	.asciiz "4109"
-@next:	.word 0
+.import __BSS_SIZE__
+.import __BSS_LOAD__
 
-.segment "BOOT"
-start:
-	ldx #$00
+;--------------------------------------
+.BSS
+nextframe: .byte 0
+
+.CODE
+;--------------------------------------
+	.word enter
+	.word enter
+	.byte "a0",$C3,$C2,$CD	; A0CBM
+
+;--------------------------------------
+enter:
+	jsr clrbss
+
+	; seed RNG
+	lda $9004
+	sta rnd::seed
+	sta rnd::seed+1
+
+	; init
+	jsr videoinit
+	jsr chars::init
+	jsr sprite::init
+	jsr player::init
+	jsr joy::init
+
 	; clear the color and screen mem
+	ldx #$00
 :	lda #CHAR_COLOR | $08
 	sta COLORMEM,x
 	sta COLORMEM+$100,x
@@ -37,26 +58,27 @@ start:
 	dex
 	bpl :-
 
-	jsr joy::init
 	lda #$ff	; chars @ $1c00, screen @ $1e00
 	sta $9005
 	lda #(BORDER_COLOR | (BG_COLOR << 4))|$08
 	sta $900f
 	lda #(AUX_COLOR << 4) | 8
 	sta $900e
-	jmp enter
 
-.CODE
-enter:
-	sei
+	; load the first room
 	lda #$00
 	jsr screen::buffer
 	jsr screen::flip
-	;jsr gen::screen
+
+	; spawn an enemy
 	ldx #SCREEN_W*8-15
 	ldy #90
 	lda #EYE
 	jsr enemy::spawn
+	lda #ARROW
+	sta SCREEN+SCREEN_W*3+6
+
+	; install raster interrupt
 	ldx #<splitirq
 	ldy #>splitirq
 	lda #IRQ_RASTER_START
@@ -65,7 +87,8 @@ enter:
 initui:
 	lda #$01
 	jsr player::harm
-	jmp main
+	lda #SWORD_U
+	jsr item::add
 
 main:	lda nextframe
 	bne main
@@ -74,6 +97,7 @@ main:	lda nextframe
 	inc nextframe
 	jmp main
 
+;--------------------------------------
 splitirq:
 	sync
 	; wait for 8 raster lines
@@ -96,11 +120,37 @@ splitirq:
 	sta nextframe
 
 	bit $9124
-	pla
-	tay
-	pla
-	tax
-	pla
-	rti
+	jmp $ff56
 
-nextframe: .byte 0
+;--------------------------------------
+.proc clrbss
+@addr=$f0
+	lda #$00
+	sta @addr
+	lda #>__BSS_LOAD__
+	sta @addr+1
+
+	ldy #<__BSS_LOAD__
+@l0:	lda #$00
+	sta (@addr),y
+	iny
+	bne :+
+	inc @addr+1
+:	cpy #<(__BSS_SIZE__+__BSS_LOAD__)
+	bne @l0
+	lda @addr+1
+	cmp #>(__BSS_SIZE__+__BSS_LOAD__)
+	bne @l0
+	rts
+.endproc
+
+;--------------------------------------
+.proc videoinit
+	ldx #3
+@l0:	lda @init,x
+	sta $9000,x
+	dex
+	bpl @l0
+	rts
+@init:	.byte $05,$19,$96,$2e
+.endproc

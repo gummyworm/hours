@@ -1,11 +1,10 @@
-.CODE
-
 .include "constants.inc"
 .include "player.inc"
 .include "rand.inc"
 .include "screen.inc"
 .include "sound.inc"
 .include "sprite.inc"
+.include "util.inc"
 
 .export __enemy_clear
 .export __enemy_spawn
@@ -16,17 +15,19 @@ AI_CHANGE_ON_HIT=0
 AI_WANDER_TOWARD_PLAYER=1
 AI_KNOCKBACK=2
 
-;--------------------------------------
-num:     .byte $ff		; number of enemies onscreen - 1
+;-------------------------------------
+.BSS
+num:     .byte 0		; number of enemies onscreen
 enemies: .res MAX_ENEMIES	; sprite (character) ID's
-hp:  	 .res MAX_ENEMIES,4	; health points of each enemy
+hp:  	 .res MAX_ENEMIES  	; health points of each enemy
 xpos:    .res MAX_ENEMIES	; x-positions of each enemy
 ypos:    .res MAX_ENEMIES	; y-positions of each enemy
-dir:	 .res MAX_ENEMIES,DIR_UP	; direction enemies are headed
-ai:	 .res MAX_ENEMIES,0	; AI routine to use for enemies
+dir:	 .res MAX_ENEMIES	; direction enemies are headed
+ai:	 .res MAX_ENEMIES  	; AI routine to use for enemies
 knockback: .res MAX_ENEMIES	; frames to knockback
-iframes: .res MAX_ENEMIES,0	; invincibility frames
+iframes: .res MAX_ENEMIES  	; invincibility frames
 
+.CODE
 ;--------------------------------------
 ; each pattern receives:
 ;   .X/$fb: the enemy x-coord
@@ -147,7 +148,8 @@ ai_patterns:
 	sta @bot
 
 	ldx num
-	bmi @done
+	beq @done
+	dex
 	stx @cnt
 
 @l0:	ldx @cnt
@@ -197,7 +199,7 @@ ai_patterns:
 ; clear removes all enemies. Call this, e.g., during screen transition.
 ; clear
 .proc __enemy_clear
-	lda #$ff
+	lda #$00
 	sta num
 	rts
 .endproc
@@ -215,14 +217,16 @@ ai_patterns:
 	jsr sprite::on
 
 	; set variables for this enemy
-	inc num
 	ldy num
+	inc num
 	pla
 	sta enemies,y
 	lda @xpos
 	sta xpos,y
 	lda @ypos
 	sta ypos,y
+	lda #4
+	sta hp,y
 	rts
 .endproc
 
@@ -235,9 +239,16 @@ ai_patterns:
 @newx=$fb
 @newy=$fc
 @dir=$fd
-	lda num
-	bmi @done
-	sta @cnt
+@ai=$15
+	ldx num
+	bne :+
+	rts
+
+:	dex
+	stx @cnt
+
+	lda #$4c	; jmp
+	sta @ai
 
 @l0:	ldx @cnt
 	lda hp,x
@@ -269,9 +280,9 @@ ai_patterns:
 	tax
 @setpattern:
 	lda ai_patterns,x
-	sta @ai
-	lda ai_patterns+1,x
 	sta @ai+1
+	lda ai_patterns+1,x
+	sta @ai+2
 
 	; get the new (x,y) and direction of updated enemy
 	ldx @cnt
@@ -279,8 +290,8 @@ ai_patterns:
 	sta @dir
 	ldx @prevx
 	ldy @prevy
-@ai=*+1
-	jsr $ffff
+	jsr @ai
+
 @updatepos:
 	stx @newx
 	sty @newy

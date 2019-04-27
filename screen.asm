@@ -1,5 +1,3 @@
-.CODE
-
 .export __screen_buffer
 .export __screen_flip
 .export __screen_getchar
@@ -19,11 +17,7 @@
 .export __screen_iter_rowmajor_neg_bot
 
 .include "constants.inc"
-
-__screen_iter_done: .byte 0
-iter = $66
-iter_rowcnt=$68
-iter_colcnt=$69
+.include "util.inc"
 
 ; display list constants
 END=0
@@ -31,6 +25,16 @@ LINE=1
 BLOCK=2
 POINT=3
 
+iter = $66
+iter_rowcnt=$68
+iter_colcnt=$69
+
+.BSS
+;--------------------------------------
+__screen_iter_done: .byte 0
+
+.CODE
+;--------------------------------------
 ; addresses of the display lists for each room
 rooms:
 	.word testroom
@@ -165,6 +169,8 @@ testroom2:
 .proc __screen_buffer
 @src=$20
 @i=$22
+@nargs=$24
+@instr=$26
 	asl
 	tax
 	lda rooms,x
@@ -198,13 +204,14 @@ testroom2:
 	lda (@src),y
 	sta $f0,x
 	inx
-@nargs=*+1
-	cpx #$00
+	cpx @nargs
 	bne @l1
 	iny
 	sty @i
-@instr=*+1
-	jsr $ffff
+
+	ldx @instr
+	ldy @instr+1
+	jsr util::call
 	jmp @l0
 @done:	rts
 .endproc
@@ -295,7 +302,7 @@ screenaddr:
 
 ;--------------------------------------
 ; canmove returns .Z set if the character in (.X,.Y) can
-; be occupied.
+; be occupied. If it cannot, .A contains the character that prohibits the move
 .proc __screen_canmove
 	cpx #$fe
 	bcs @no
@@ -323,13 +330,15 @@ screenaddr:
 	bcs @no
 	lda #$00
 	rts
-@no:	lda #$ff
+@no:	lda (GETCHAR_ADDR),y
 	rts
 .endproc
 
 ;--------------------------------------
 ; move updates the coordinates of (.X,.Y) by 1 step in the direction given in .A,
 ; validates the move, and returns the updated coordinates.
+; If the move was not possible (because of a character at the new location)
+; the carry flag is CLEAR.
 .proc __screen_move
 @x=$30
 @y=$31
@@ -559,11 +568,11 @@ screenaddr:
 ;--------------------------------------
 ; __screen_rvs returns the direction opposite of the one provided in .A
 .proc __screen_rvs
+@savex=$3f
 	stx @savex
 	tax
 	lda @rvstab,x
-@savex=*+1
-	ldx #$00
+	ldx @savex
 	rts
 @rvstab: .byte DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT
 .endproc

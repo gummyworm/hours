@@ -6,27 +6,12 @@ LINES           = 261
 CYCLES_PER_LINE = 65
 .endif
 
+.export __irq_raster
+
 TIMER_VALUE     = LINES * CYCLES_PER_LINE - 2 ; timer value for stable raster int.
 
 .CODE
 ;--------------------------------------
-.export __irq_raster
-	sei           ;we don't want lost cycles by IRQ calls :)
-sync:
-	cmp $9004     ;scan for begin rasterline (A=$11 after first return)
-	bne *-3
-	bne *-3       ;wait if not reached rasterline #$11 yet
-	ldy #8        ;the walue for VIA timer fetch & for y-delay loop         2 cycles
-	sty $9126     ;CIA Timer will count from 8,8 down to 7,6,5,4,3,2,1      4 cycles
-	dey           ;Y=Y-1 (8 iterations: 7,6,5,4,3,2,1,0)                    2 cycles*8
-	bne *-1       ;loop needed to complete the poll-delay with 39 cycles    3 cycles*7+2 cycles*1
-	sty $9127     ;no need Hi-byte for timer at all (or it will mess up)    4 cycles
-	sta $dc0e,y   ;forced restart of the timer to value 8 (set in dc04)     5 cycles
-	lda #$11      ;value for d012 scan and for timerstart in dc0e           2 cycles
-	cmp $9004     ;check if line ended (new line) or not (same line)
-	bne sync      ;if line changed after 63 cycles, resyncronize it!
-
-
 .proc __irq_raster
         sei
 ;set the IRQ vector

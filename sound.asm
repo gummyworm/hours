@@ -1,5 +1,3 @@
-.CODE
-
 .export __sound_sfx
 .export __sound_song
 .export __sound_update
@@ -8,6 +6,7 @@
 .export __sfx_hitenemy
 .export __sfx_kill
 
+.BSS
 ;--------------------------------------
 cursfx: .word 0
 sfxidx: .byte 0
@@ -18,6 +17,8 @@ cursong: .word 0
 songidx: .byte 0
 tempo: .byte 0
 
+;--------------------------------------
+.CODE
 sfxtab:
 	.word sfx_hit
 	.word sfx_hitenemy

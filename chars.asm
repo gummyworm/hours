@@ -1,12 +1,11 @@
 .include "constants.inc"
-
 .export charset
+.export __chars_init
 
+.CODE
 ;--------------------------------------
-.segment "CHARS"
 charset:
-.res MAX_SPRITES * 8
-.res 8
+.res 8					; blank
 .byte  20,85,119,85,221,85,85,60	; tree
 
 .byte  0,40,40,0,170,170,170,170	; player UP
@@ -21,10 +20,20 @@ charset:
 
 ; death animation
 
-
 ; enemies
 .byte  40,170,150,190,190,190,150,40	; eye
-
 .byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
 
+; pickups
+.byte  20,20,85,85,170,40,40,40	; arrow
+charset_sz=*-charset
 
+;--------------------------------------
+.proc __chars_init
+	ldx #charset_sz-1
+@l0:	lda charset-1,x
+	sta CHARMEM+MAX_SPRITES*8-1,x
+	dex
+	bne @l0
+	rts
+.endproc
