@@ -45,12 +45,11 @@ ai_patterns:
 ;--------------------------------------
 .proc doknockback
 	pha
+	lda #$02
+	sta $f0
+	pla
 	jsr screen::rvs
-	pha
-	jsr screen::move
-	pla
-	jsr screen::move
-	pla
+	jsr screen::movem
 	rts
 .endproc
 

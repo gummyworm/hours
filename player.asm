@@ -98,16 +98,13 @@ knockframes: .byte 0	; frames to knock back player
 
 @doknockback:
 	jsr __player_off
+	lda #$02
+	sta $f0
 	lda dir
 	jsr screen::rvs
 	ldx xpos
 	ldy ypos
-	jsr screen::move
-	lda dir
-	jsr screen::rvs
-	jsr screen::move
-	stx xpos
-	sty ypos
+	jsr screen::movem
 	jmp @redrawplayer
 
 @swing:
