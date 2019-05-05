@@ -4,7 +4,7 @@ CONSTANTS_INC = 1
 ; gameplay constants
 SWINGING_TIME = 20	; frames to swing player weapon upon FIRE
 MAX_ENEMIES = 4
-MAX_BULLETS = 4
+MAX_BULLETS = 1
 MAX_ITEMS = 6
 IFRAMES = 10	; frames of invulnerability after taking damage
 KNOCK_FRAMES = 10 ; # of frames to recoil upon taking damage

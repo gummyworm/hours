@@ -3,6 +3,7 @@
 .export __screen_getchar
 .export __screen_canmove
 .export __screen_move
+.export __screen_movem
 .export __screen_rvs
 
 .export __screen_iter_begin_topleft
@@ -340,6 +341,17 @@ screenaddr:
 ; If the move was not possible (because of a character at the new location)
 ; the carry flag is CLEAR.
 .proc __screen_move
+	pha
+	lda #$01
+	sta $f0
+	pla
+.endproc
+;--------------------------------------
+; movem updates the coordinates of (.X,.Y) by $f0 steps in the direction
+; given in .A, validates the move, and returns the updated coordinates.
+; If the move was not possible (because of a character at the new location)
+; the carry flag is CLEAR.
+.proc __screen_movem
 @x=$30
 @y=$31
 @prevx=$32
@@ -348,20 +360,40 @@ screenaddr:
 	sty @prevy
 @left:	cmp #DIR_LEFT
 	bne @right
-	dex
+	lda @prevx
+	sec
+	sbc $f0
+	tax
+	jmp @check
+
 @right:	cmp #DIR_RIGHT
 	bne @up
-	inx
+	lda @prevx
+	clc
+	adc $f0
+	tax
+	jmp @check
+
 @up:	cmp #DIR_UP
 	bne @down
-	dey
+	lda @prevy
+	sec
+	sbc $f0
+	tay
+	jmp @check
+
 @down:	cmp #DIR_DOWN
 	bne @check
-	iny
+	lda @prevy
+	clc
+	adc $f0
+	tay
+
 @check:	stx @x
 	sty @y
 	jsr __screen_canmove
 	bne @stay
+
 @move:	ldx @x
 	ldy @y
 	sec

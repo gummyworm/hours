@@ -1,3 +1,4 @@
+.include "bullet.inc"
 .include "chars.inc"
 .include "constants.inc"
 .include "enemy.inc"
@@ -39,6 +40,7 @@ enter:
 	jsr sprite::init
 	jsr player::init
 	jsr joy::init
+	jsr blt::init
 
 	; clear the color and screen mem
 	ldx #$00
@@ -94,6 +96,7 @@ main:	lda nextframe
 	bne main
 	jsr player::update
 	jsr enemy::update
+	jsr blt::update
 	inc nextframe
 	jmp main
 

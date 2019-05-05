@@ -1,5 +1,6 @@
 .CODE
 
+.include "bullet.inc"
 .include "constants.inc"
 .include "enemy.inc"
 .include "gen.inc"
@@ -268,11 +269,33 @@ knockframes: .byte 0	; frames to knock back player
 
 ;--------------------------------------
 .proc action
+	jmp @usebow
 	jsr item::selected
 	cmp #SWORD_U
-	bne :+
-	jsr swing
-:	rts
+	bne @bow
+
+@sword:	jsr swing
+	rts
+@bow:	cmp #ARROW
+	bne @done
+@usebow:
+	jsr fire
+
+@done:	rts
+.endproc
+
+;--------------------------------------
+.proc fire
+	ldx xpos
+	ldy ypos
+	lda #$09
+	sta $f0
+	lda dir
+	jsr screen::movem
+	lda #EYE
+	sta $f0
+	lda dir
+	jmp blt::add
 .endproc
 
 ;--------------------------------------
