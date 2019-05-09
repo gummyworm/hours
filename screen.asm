@@ -10,7 +10,6 @@
 .export __screen_iter_begin_topright
 .export __screen_iter_begin_botleft
 .export __screen_iter_begin_botright
-.export __screen_iter_done
 .export __screen_iter_rowmajor_pos
 .export __screen_iter_rowmajor_neg
 .export __screen_iter_colmajor_neg
@@ -25,14 +24,12 @@ END=0
 LINE=1
 BLOCK=2
 POINT=3
+COLOR=4
+BORDER=5
 
 iter = $66
 iter_rowcnt=$68
 iter_colcnt=$69
-
-.BSS
-;--------------------------------------
-__screen_iter_done: .byte 0
 
 .CODE
 ;--------------------------------------
@@ -46,15 +43,63 @@ instructiontab:
 	.word line
 	.word block
 	.word point
+	.word color
+	.word border
 
 nargs:
-	.byte 0
-	.byte 5
-	.byte 5
-	.byte 3
+	.byte 0	; dummy
+	.byte 5	; CH,X0,Y0,X1,Y1
+	.byte 5	; CH,X0,Y0,X1,Y1
+	.byte 3	; CH,X,Y
+	.byte 2	; $900f,$900e
+	.byte 5 ; CH,X0,Y0,X1,Y1
 
 ;--------------------------------------
-; line renders a line with the char $f4 from ($f3,$f2) to ($f1,$f0)
+; border draws an empty box from ($f0,$f1) to ($f2,$f3) with the character $f0
+.proc border
+@x0=$f7
+@y0=$f8
+@x1=$f9
+@y1=$fa
+	; save the coordinates
+	ldx #$03
+@l0:	lda $f1,x
+	sta @x0,x
+	dex
+	bpl @l0
+
+	lda @y0
+	sta $f4
+	jsr line	; top
+	lda @y1
+	sta $f2
+	sta $f4
+	jsr line	; bot
+	lda @y0
+	sta $f2
+	lda @x0
+	sta $f3		; left
+	jsr line
+	lda @x1
+	sta $f1
+	sta $f3
+	jmp line	; right
+.endproc
+
+;--------------------------------------
+; color sets the border, background, and auxiliary colors
+.proc color
+@900f=$f0
+@900e=$f1
+	lda @900f
+	sta $900f
+	lda @900e
+	sta $900e
+	rts
+.endproc
+
+;--------------------------------------
+; line renders a line with the char $f0 from ($f1,$f2) to ($f3,$f4)
 ; (f0,f1) must be the upper-left point
 ; TODO: bresenham
 .proc line
@@ -65,6 +110,12 @@ nargs:
 @y1=$f4
 @done=$f5
 @i=$f6
+	; preserve x0,y0 to make this easier to use by higher level instructions
+	lda @x0
+	pha
+	lda @y0
+	pha
+
 @l0:	lda #$00
 	sta @done
 	ldx @x0
@@ -88,6 +139,11 @@ nargs:
 	lda @done
 	cmp #$03
 	bne @l0
+
+	pla
+	sta @y0
+	pla
+	sta @x0
 	rts
 .endproc
 
@@ -139,10 +195,11 @@ nargs:
 
 ;--------------------------------------
 testroom:
-	.byte LINE,TREE,0,0,21*8,0
-	.byte LINE,TREE,0,0,0,(SCREEN_H-2)*8
-	.byte LINE,TREE,21*8,0,20*8,(SCREEN_H-2)*8
-	.byte LINE,TREE,0,(SCREEN_H-1)*8,21*8,(SCREEN_H-1)*8
+	;.byte LINE,TREE,0,0,21*8,0
+	;.byte LINE,TREE,0,0,0,(SCREEN_H-2)*8
+	;.byte LINE,TREE,21*8,0,20*8,(SCREEN_H-2)*8
+	;.byte LINE,TREE,0,(SCREEN_H-1)*8,21*8,(SCREEN_H-1)*8
+	.byte BORDER,TREE,0,0,21*8,(SCREEN_H-1)*8
 	.byte BLOCK,TREE,(8*10),(8*8), (8*13),(12*8)
 	.byte POINT,BLANK,10*8,0
 	.byte POINT,BLANK,0,4*8
@@ -452,8 +509,6 @@ screenaddr:
 	sta iter+1
 	lda #<(SCREEN_W*SCREEN_H - SCREEN_W+1)
 	sta iter
-	lda #$00
-	sta __screen_iter_done
 	lda #SCREEN_W-1
 	sta iter_colcnt
 	lda #SCREEN_H-2
