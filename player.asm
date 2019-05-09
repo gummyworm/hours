@@ -277,6 +277,7 @@ knockframes: .byte 0	; frames to knock back player
 	bne @done
 @usebow:
 	jsr fire
+	jsr sfx::fire
 
 @done:	rts
 .endproc

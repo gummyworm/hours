@@ -195,10 +195,6 @@ nargs:
 
 ;--------------------------------------
 testroom:
-	;.byte LINE,TREE,0,0,21*8,0
-	;.byte LINE,TREE,0,0,0,(SCREEN_H-2)*8
-	;.byte LINE,TREE,21*8,0,20*8,(SCREEN_H-2)*8
-	;.byte LINE,TREE,0,(SCREEN_H-1)*8,21*8,(SCREEN_H-1)*8
 	.byte BORDER,TREE,0,0,21*8,(SCREEN_H-1)*8
 	.byte BLOCK,TREE,(8*10),(8*8), (8*13),(12*8)
 	.byte POINT,BLANK,10*8,0

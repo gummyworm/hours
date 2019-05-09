@@ -5,6 +5,7 @@
 .export __sfx_hit
 .export __sfx_hitenemy
 .export __sfx_kill
+.export __sfx_fire
 
 .BSS
 ;--------------------------------------
@@ -23,6 +24,7 @@ sfxtab:
 	.word sfx_hit
 	.word sfx_hitenemy
 	.word sfx_kill
+	.word sfx_fire
 
 ;--------------------------------------
 sfx_hit:
@@ -40,14 +42,23 @@ sfx_kill:
 .byte 10, 0,0,131,140	; frames to hold sound and values for each voice
 @killlen=*-sfx_kill
 
+sfx_fire:
+.byte @firelen
+.byte 10,250,0,0,140
+@firelen=*-sfx_fire
+
 ;--------------------------------------
 __sfx_hit:
 	lda #$00
 	.byte $2c
 __sfx_hitenemy:
 	lda #$01
+	.byte $2c
 __sfx_kill:
 	lda #$02
+	.byte $2c
+__sfx_fire:
+	lda #$03
 	jmp __sound_sfx
 
 ;--------------------------------------
