@@ -130,12 +130,14 @@ ai_patterns:
 ;--------------------------------------
 ; collide checks collision with all enemies and harms those
 ; that are colliding with the box (x,y)-(x+8,x+8).
+; returns .A = number of collisions
 .proc __enemy_collide
 @left=$30
 @right=$31
 @top=$32
 @bot=$33
 @cnt=$34
+@hits=$35
 	stx @left
 	sty @top
 	txa
@@ -145,6 +147,9 @@ ai_patterns:
 	tya
 	adc #9
 	sta @bot
+
+	lda #$00
+	sta @hits
 
 	ldx num
 	beq @done
@@ -181,6 +186,7 @@ ai_patterns:
 	tax
 	jsr sprite::off
 	jsr sfx::kill
+	inc @hits
 	jmp @next
 
 @knock:	lda #KNOCK_FRAMES*3
@@ -191,7 +197,8 @@ ai_patterns:
 @next:	dec @cnt
 	bpl @l0
 
-@done:	rts
+@done:	lda @hits
+	rts
 .endproc
 
 ;--------------------------------------

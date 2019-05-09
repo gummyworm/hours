@@ -12,6 +12,8 @@ KNOCK_FRAMES = 10 ; # of frames to recoil upon taking damage
 IRQ_RASTER_START = $63
 IRQ_RASTER_END = IRQ_RASTER_START+16
 
+BULLET_SPEED = 3
+
 ; memory contants
 SCREEN = $1e00
 SCREEN_W = 22
@@ -58,6 +60,7 @@ DIR_RIGHT = 3
 WORLD_W=32
 WORLD_H=16
 
+; parameter/return addresses
 GETCHAR_ADDR=$50
 
 .endif

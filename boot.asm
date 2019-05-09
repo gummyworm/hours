@@ -73,7 +73,7 @@ enter:
 	jsr screen::flip
 
 	; spawn an enemy
-	ldx #SCREEN_W*8-15
+	ldx #SCREEN_W*8-24
 	ldy #90
 	lda #EYE
 	jsr enemy::spawn

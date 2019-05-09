@@ -1,6 +1,7 @@
 .CODE
 
 .include "constants.inc"
+.include "enemy.inc"
 .include "screen.inc"
 .include "sprite.inc"
 
@@ -32,6 +33,7 @@ ypos: .res MAX_BULLETS
 .proc __blt_update
 @cnt=$40
 @x=$41
+@y=$42
 	lda #MAX_BULLETS-1
 	sta @cnt
 
@@ -50,24 +52,35 @@ ypos: .res MAX_BULLETS
 	ldy ypos,x
 	lda xpos,x
 	tax
+	lda #BULLET_SPEED
+	sta $f0
 	pla
-	jsr screen::move
-	txa
-	ldx @cnt
-	bcs @redraw
+	jsr screen::movem
+	stx @x
+	sty @y
+	bcc @remove
+@collision:
+	ldx @x
+	ldy @y
+	jsr enemy::collide
+	cmp #$00
+	beq @redraw
 @remove:
+	ldx @cnt
 	lda #$ff
 	sta chars,x
 	bmi @next
-
 @redraw:
-	sta @x
+	ldx @cnt
+	lda @x
 	sta xpos,x
-	tya
+	lda @y
 	sta ypos,x
+	tay
 	lda chars,x
 	ldx @x
 	jsr sprite::on
+
 @next:	dec @cnt
 	bpl @l0
 	rts
