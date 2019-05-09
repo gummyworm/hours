@@ -44,7 +44,8 @@ ypos: .res MAX_BULLETS
 	ldy ypos,x
 	lda xpos,x
 	tax
-	jsr sprite::off
+	;jsr sprite::off
+	jsr sprite::pointoff
 
 	ldx @cnt
 	lda dirs,x
@@ -79,7 +80,8 @@ ypos: .res MAX_BULLETS
 	tay
 	lda chars,x
 	ldx @x
-	jsr sprite::on
+	jsr sprite::point
+	;jsr sprite::on
 
 @next:	dec @cnt
 	bpl @l0
@@ -112,6 +114,7 @@ ypos: .res MAX_BULLETS
 	lda $f0
 	sta chars,x
 	ldx @x
-	jsr sprite::on
+	jsr sprite::point
+	;jsr sprite::on
 	rts
 .endproc

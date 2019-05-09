@@ -5,6 +5,8 @@
 .export __sprite_off
 .export __sprite_clear
 .export __sprite_init
+.export __sprite_point
+.export __sprite_pointoff
 
 sprites=CHARMEM
 
@@ -24,6 +26,55 @@ backup_buffer: 	   .res MAX_SPRITES
 	dex
 	bpl @l0
 	rts
+.endproc
+
+;--------------------------------------
+; point uses a single sprite character to render 1 pixel at the given
+; (.X,.Y)
+.proc __sprite_point
+@dst=$f0
+	tya
+	pha
+	txa
+	pha
+	jsr screen::getchar
+	lda (GETCHAR_ADDR),y
+	jsr putsprite
+	sta @dst
+	lda #>CHARMEM
+	sta @dst+1
+
+	pla
+	and #$07
+	tax
+	pla
+	and #$07
+	tay
+	lda #$00
+	sec
+@l0:	ror
+.ifdef MULTICOLOR
+	ror
+.endif
+	dex
+	bpl @l0
+	eor (@dst),y
+	sta (@dst),y
+	rts
+.endproc
+
+;--------------------------------------
+.proc __sprite_pointoff
+	jsr screen::getchar
+	lda (GETCHAR_ADDR),y
+	cmp #MAX_SPRITES
+	bcs @done
+	tax
+	lda backup_buffer,x
+	sta (GETCHAR_ADDR),y
+	lda #$ff
+	sta allocated_sprites,x
+@done:	rts
 .endproc
 
 ;--------------------------------------
@@ -188,11 +239,12 @@ backup_buffer: 	   .res MAX_SPRITES
 	cpy @ystop
 	bcc @l4
 	rts
+.endproc
 
 ;--------------------------------------
 ; putsprite finds the next available sprite slot and places it to the
 ; screen @ (GETCHAR_ADDR),y.  The LSB of the allocated UDG is returned in .A
-putsprite:
+.proc putsprite
 @ystop=$30
 @ysave=$31
 	cmp #BLANK
