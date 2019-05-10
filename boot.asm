@@ -73,6 +73,8 @@ enter:
 	jsr screen::flip
 
 	; spawn an enemy
+	lda #AI_FIRE_AT_PLAYER
+	sta $f0
 	ldx #SCREEN_W*8-24
 	ldy #90
 	lda #EYE

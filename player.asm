@@ -10,14 +10,15 @@
 .include "sound.inc"
 .include "sprite.inc"
 
-.export __player_update
-.export __player_on
-.export __player_off
-.export __player_harm
+.export __player_collide
 .export __player_dirto
+.export __player_harm
+.export __player_init
+.export __player_off
+.export __player_on
+.export __player_update
 .export __player_xpos
 .export __player_ypos
-.export __player_init
 
 .BSS
 ;--------------------------------------
@@ -262,6 +263,41 @@ knockframes: .byte 0	; frames to knock back player
 	clc
 	adc dir
 	jmp sprite::on
+.endproc
+
+;--------------------------------------
+; collide checks collision with the quad in (.X,.Y) to ($f0,$f1) and the
+; player
+; returns .Z set if a collision occurred
+.proc __player_collide
+@x1=$f0
+@y1=$f1
+@xend=$f2
+@yend=$f3
+	lda xpos
+	clc
+	adc #$08
+	sta @xend
+	lda ypos
+	clc
+	adc #$08
+	sta @yend
+
+	cpx @xend
+	bcs @no
+	lda @x1
+	cmp xpos
+	bcc @no
+	lda @y1
+	cmp ypos
+	bcc @no
+	cpy @yend
+	bcs @no
+
+@yes:	lda #$00
+	rts
+@no:	lda #$ff
+	rts
 .endproc
 
 ;--------------------------------------

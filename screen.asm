@@ -409,53 +409,66 @@ screenaddr:
 @y=$31
 @prevx=$32
 @prevy=$33
+@update=$34
 	stx @prevx
 	sty @prevy
-@left:	cmp #DIR_LEFT
-	bne @right
-	lda @prevx
-	sec
-	sbc $f0
-	tax
-	jmp @check
 
-@right:	cmp #DIR_RIGHT
-	bne @up
-	lda @prevx
-	clc
-	adc $f0
-	tax
-	jmp @check
-
-@up:	cmp #DIR_UP
-	bne @down
-	lda @prevy
-	sec
-	sbc $f0
-	tay
-	jmp @check
-
-@down:	cmp #DIR_DOWN
-	bne @check
-	lda @prevy
-	clc
-	adc $f0
-	tay
-
-@check:	stx @x
+	pha
+	and #$03
+	jsr @step
+	stx @x
 	sty @y
+	pla
+	pha
+	cmp #$04
+	bcc @check
+	jsr @step
+	stx @x
+	sty @y
+
+@check:	pla
 	jsr __screen_canmove
 	bne @stay
-
 @move:	ldx @x
 	ldy @y
 	sec
 	rts
-
 @stay:	ldx @prevx
 	ldy @prevy
 	clc
 	rts
+
+@step:	asl
+	and #$0f
+	tax
+	lda @tab,x
+	sta @update
+	lda @tab+1,x
+	sta @update+1
+	jmp (@update)
+@left:	lda @prevx
+	sec
+	sbc $f0
+	tax
+	rts
+@right:	lda @prevx
+	clc
+	adc $f0
+	tax
+	rts
+@up:	lda @prevy
+	sec
+	sbc $f0
+	tay
+	rts
+@down:	lda @prevy
+	clc
+	adc $f0
+	tay
+	rts
+@tab:
+.word @up,@down,@left,@right
+.word @right,@left,@up,@down
 .endproc
 
 ;--------------------------------------

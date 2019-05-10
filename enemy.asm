@@ -1,3 +1,4 @@
+.include "bullet.inc"
 .include "constants.inc"
 .include "player.inc"
 .include "rand.inc"
@@ -10,10 +11,6 @@
 .export __enemy_spawn
 .export __enemy_update
 .export __enemy_collide
-
-AI_CHANGE_ON_HIT=0
-AI_WANDER_TOWARD_PLAYER=1
-AI_KNOCKBACK=2
 
 ;-------------------------------------
 .BSS
@@ -41,6 +38,7 @@ ai_patterns:
 .word change_on_hit
 .word wander_toward_player
 .word doknockback
+.word fire_at_player
 
 ;--------------------------------------
 .proc doknockback
@@ -84,6 +82,28 @@ ai_patterns:
 	.byte $2c
 :	lda @dir	; keep moving in same direction
 	jmp screen::move
+.endproc
+
+;--------------------------------------
+.proc fire_at_player
+@xpos=$f9
+@ypos=$fa
+@dir=$fd
+	ldx #3
+	jsr rnd::num
+	cmp #$00
+	bne @done
+
+	; fire a bullet in the player's direction
+	lda #$09
+	sta $f0
+	ldx @xpos
+	ldy @ypos
+	jsr player::dirto
+	jsr screen::movem
+	jsr blt::add
+@done:	jsr wander_toward_player
+	rts
 .endproc
 
 ;--------------------------------------
@@ -211,10 +231,12 @@ ai_patterns:
 .endproc
 
 ;--------------------------------------
-; spawns an enemy of the sprite in .A at (.X,.Y)
+; spawns an enemy with the sprite character in .A at (.X,.Y) and has it behave
+; according to the pattern in $f0.
 .proc __enemy_spawn
 @xpos=$10
 @ypos=$11
+@ai=$f0
 	pha
 
 	; display the enemy
@@ -226,6 +248,9 @@ ai_patterns:
 	ldy num
 	inc num
 	pla
+	cpy #MAX_ENEMIES-1
+	bcs @done
+
 	sta enemies,y
 	lda @xpos
 	sta xpos,y
@@ -233,7 +258,10 @@ ai_patterns:
 	sta ypos,y
 	lda #4
 	sta hp,y
-	rts
+	lda @ai
+	sta ai,y
+
+@done:	rts
 .endproc
 
 ;--------------------------------------

@@ -2,6 +2,7 @@
 
 .include "constants.inc"
 .include "enemy.inc"
+.include "player.inc"
 .include "screen.inc"
 .include "sprite.inc"
 
@@ -66,6 +67,8 @@ ypos: .res MAX_BULLETS
 	jsr enemy::collide
 	cmp #$00
 	beq @redraw
+	jsr player::collide
+	bne @redraw
 @remove:
 	ldx @cnt
 	lda #$ff

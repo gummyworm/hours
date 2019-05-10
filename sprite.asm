@@ -45,7 +45,11 @@ backup_buffer: 	   .res MAX_SPRITES
 	sta @dst+1
 
 	pla
+.ifdef MULTICOLOR
+	and #$06
+.else
 	and #$07
+.endif
 	tax
 	pla
 	and #$07
