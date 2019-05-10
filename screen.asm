@@ -410,6 +410,7 @@ screenaddr:
 @prevx=$32
 @prevy=$33
 @update=$34
+	pha
 	stx @prevx
 	sty @prevy
 	pha
@@ -428,10 +429,12 @@ screenaddr:
 @move:	ldx @x
 	ldy @y
 	sec
+	pla
 	rts
 @stay:	ldx @prevx
 	ldy @prevy
 	clc
+	pla
 	rts
 
 @step:	asl

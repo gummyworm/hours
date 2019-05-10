@@ -391,13 +391,23 @@ knockframes: .byte 0	; frames to knock back player
 ;--------------------------------------
 ; dirto returns a direction toward the player from (.X, .Y)
 .proc __player_dirto
-	cpx xpos
+	lda $9004
+	and #$01
+	beq @1
+
+@0:	jsr @chkx
+	jmp @chky
+@1:	jsr @chky
+	jmp @chkx
+
+@chkx:	cpx xpos
 	beq @chky
 	bcc :+
 	lda #DIR_LEFT
 	rts
 :	lda #DIR_RIGHT
 	rts
+
 @chky:	cpy ypos
 	bcc :+
 	lda #DIR_UP

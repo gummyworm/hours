@@ -82,7 +82,8 @@ ai_patterns:
 	jsr player::dirto	; move toward player
 	.byte $2c
 :	lda @dir	; keep moving in same direction
-	jmp screen::move
+	jsr screen::move
+	rts
 .endproc
 
 ;--------------------------------------
@@ -103,8 +104,7 @@ ai_patterns:
 	jsr player::dirto
 	jsr screen::movem
 	jsr blt::add
-@done:	jsr wander_toward_player
-	rts
+@done:	jmp wander_toward_player
 .endproc
 
 ;--------------------------------------
