@@ -13,10 +13,14 @@ cursfx: .word 0
 sfxidx: .byte 0
 sfxlen: .byte 0
 sfxcnt: .byte 0	; frames to hold current sound for
+effect: .byte 0
 
 cursong: .word 0
 songidx: .byte 0
 tempo: .byte 0
+
+DESCEND = $81
+ASCEND = $82
 
 ;--------------------------------------
 .CODE
@@ -25,6 +29,10 @@ sfxtab:
 	.word sfx_hitenemy
 	.word sfx_kill
 	.word sfx_fire
+
+fxtab:  .word $0000
+	.word descend
+	.word ascend
 
 ;--------------------------------------
 sfx_hit:
@@ -39,12 +47,12 @@ sfx_hitenemy:
 
 sfx_kill:
 .byte @killlen
-.byte 10, 0,0,131,140	; frames to hold sound and values for each voice
+.byte DESCEND,20,0,0,181,140
 @killlen=*-sfx_kill
 
 sfx_fire:
 .byte @firelen
-.byte 10,250,0,0,140
+.byte DESCEND,20,0,0,181,140
 @firelen=*-sfx_fire
 
 ;--------------------------------------
@@ -62,15 +70,43 @@ __sfx_fire:
 	jmp __sound_sfx
 
 ;--------------------------------------
+.proc ascend
+	inc $900a
+	inc $900b
+	inc $900c
+	rts
+.endproc
+
+;--------------------------------------
+.proc descend
+	dec $900a
+	dec $900b
+	dec $900c
+	rts
+.endproc
+
+;--------------------------------------
 .proc __sound_update
 @src=$f0
+@fx=$f0
 	lda #$9
 	lda cursfx+1
 	beq @playsong
 @playsfx:
 	dec sfxcnt
 	beq @continue
+	lda effect
+	bne @dofx
 	rts
+
+@dofx:	asl
+	tax
+	lda fxtab,x
+	sta @fx
+	lda fxtab+1,x
+	sta @fx+1
+	jmp (@fx)
+
 @continue:
 	ldy sfxidx
 	cpy sfxlen
@@ -83,13 +119,22 @@ __sfx_fire:
 	rts
 
 @nextstep:
+	lda #$00
+	sta effect
+
 	lda cursfx
 	sta @src
 	lda cursfx+1
 	sta @src+1
 
 	lda (@src),y
-	sta sfxcnt
+	bpl :+
+	sec
+	sbc #$80
+	sta effect
+	iny
+	lda (@src),y
+:	sta sfxcnt
 	iny
 	lda (@src),y
 	sta $900a
