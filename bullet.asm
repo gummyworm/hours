@@ -64,7 +64,7 @@ ypos: .res MAX_BULLETS
 @collision:
 	ldx @x
 	ldy @y
-	jsr enemy::collide
+	jsr enemy::collide1x1
 	cmp #$00
 	beq @redraw
 	jsr player::collide

@@ -116,7 +116,7 @@ knockframes: .byte 0	; frames to knock back player
 @swinging:
 	ldx swordx
 	ldy swordy
-	jsr enemy::collide
+	jsr enemy::collide8x8
 	dec swinging
 	bne @inputdone
 

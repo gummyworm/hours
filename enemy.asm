@@ -10,7 +10,8 @@
 .export __enemy_clear
 .export __enemy_spawn
 .export __enemy_update
-.export __enemy_collide
+.export __enemy_collide1x1
+.export __enemy_collide8x8
 
 ;-------------------------------------
 .BSS
@@ -148,24 +149,37 @@ ai_patterns:
 .endproc
 
 ;--------------------------------------
+.proc __enemy_collide1x1
+	lda #$01
+	.byte $2c
+.endproc
+;--------------------------------------
+.proc __enemy_collide8x8
+	lda #$08
+	sta $f0
+	sta $f1
+.endproc
+;--------------------------------------
 ; collide checks collision with all enemies and harms those
-; that are colliding with the box (x,y)-(x+8,x+8).
+; that are colliding with the box (x,y)-(x+$f0,x+$f1).
 ; returns .A = number of collisions
-.proc __enemy_collide
+.proc collide
 @left=$30
 @right=$31
 @top=$32
 @bot=$33
 @cnt=$34
 @hits=$35
+@w=$f0
+@h=$f1
 	stx @left
 	sty @top
 	txa
 	clc
-	adc #9
+	adc @w
 	sta @right
 	tya
-	adc #9
+	adc @h
 	sta @bot
 
 	lda #$00
