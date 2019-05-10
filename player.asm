@@ -95,9 +95,9 @@ knockframes: .byte 0	; frames to knock back player
 @knockback:
 	lda knockframes
 	beq @swing
-	dec knockframes
 
 @doknockback:
+	dec knockframes
 	jsr __player_off
 	lda #$02
 	sta $f0
@@ -106,6 +106,8 @@ knockframes: .byte 0	; frames to knock back player
 	ldx xpos
 	ldy ypos
 	jsr screen::movem
+	stx xpos
+	sty ypos
 	jmp @redrawplayer
 
 @swing:

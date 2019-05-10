@@ -412,22 +412,18 @@ screenaddr:
 @update=$34
 	stx @prevx
 	sty @prevy
-
 	pha
 	and #$03
 	jsr @step
 	stx @x
 	sty @y
 	pla
-	pha
 	cmp #$04
 	bcc @check
 	jsr @step
 	stx @x
 	sty @y
-
-@check:	pla
-	jsr __screen_canmove
+@check:	jsr __screen_canmove
 	bne @stay
 @move:	ldx @x
 	ldy @y
@@ -450,21 +446,25 @@ screenaddr:
 	sec
 	sbc $f0
 	tax
+	ldy @prevy
 	rts
 @right:	lda @prevx
 	clc
 	adc $f0
 	tax
+	ldy @prevy
 	rts
 @up:	lda @prevy
 	sec
 	sbc $f0
 	tay
+	ldx @prevx
 	rts
 @down:	lda @prevy
 	clc
 	adc $f0
 	tay
+	ldx @prevx
 	rts
 @tab:
 .word @up,@down,@left,@right
@@ -671,4 +671,5 @@ screenaddr:
 	ldx @savex
 	rts
 @rvstab: .byte DIR_DOWN, DIR_UP, DIR_RIGHT, DIR_LEFT
+	 .byte DIR_DOWNLEFT, DIR_UPRIGHT, DIR_DOWNRIGHT, DIR_UPLEFT
 .endproc
