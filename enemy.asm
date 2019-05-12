@@ -23,6 +23,7 @@ ypos:    .res MAX_ENEMIES	; y-positions of each enemy
 dir:	 .res MAX_ENEMIES	; direction enemies are headed
 ai:	 .res MAX_ENEMIES  	; AI routine to use for enemies
 knockback: .res MAX_ENEMIES	; frames to knockback
+knockdir:  .res MAX_ENEMIES	; direction of knockback
 iframes: .res MAX_ENEMIES  	; invincibility frames
 
 .CODE
@@ -43,13 +44,16 @@ ai_patterns:
 
 ;--------------------------------------
 .proc doknockback
-	pha
+@xpos=$f9
+@ypos=$fa
+@dir=$fd
+@cnt=$f8
 	lda #$02
 	sta $f0
-	pla
-	jsr screen::rvs
-	jsr screen::movem
-	rts
+	ldx @cnt
+	lda knockdir,x
+	ldx @xpos
+	jmp screen::movem
 .endproc
 
 ;--------------------------------------
@@ -57,9 +61,9 @@ ai_patterns:
 @xpos=$f9
 @ypos=$fa
 @dir=$fd
-	pha
+	lda @dir
 	jsr screen::move
-	pla
+	lda @dir
 	bcs :+
 	; change direction
 	inc @dir
@@ -154,7 +158,9 @@ ai_patterns:
 .endproc
 
 ;--------------------------------------
+; sets the knockback direction to the value in .A
 .proc __enemy_collide1x1
+	sta $f2
 	lda #$01
 	.byte $2c
 .endproc
@@ -177,6 +183,7 @@ ai_patterns:
 @hits=$35
 @w=$f0
 @h=$f1
+@dir=$f2
 	stx @left
 	sty @top
 	txa
@@ -232,6 +239,8 @@ ai_patterns:
 	sta knockback,x
 	lda #IFRAMES
 	sta iframes,x
+	lda @dir
+	sta knockdir,x
 	jsr sfx::hitenemy
 @next:	dec @cnt
 	bpl @l0

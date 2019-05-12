@@ -35,6 +35,7 @@ ypos: .res MAX_BULLETS
 @cnt=$40
 @x=$41
 @y=$42
+@dir=$43
 	lda #MAX_BULLETS-1
 	sta @cnt
 
@@ -50,13 +51,13 @@ ypos: .res MAX_BULLETS
 
 	ldx @cnt
 	lda dirs,x
-	pha
+	sta @dir
 	ldy ypos,x
 	lda xpos,x
 	tax
 	lda #BULLET_SPEED
 	sta $f0
-	pla
+	lda @dir
 	jsr screen::movem
 	stx @x
 	sty @y
@@ -64,6 +65,7 @@ ypos: .res MAX_BULLETS
 @collision:
 	ldx @x
 	ldy @y
+	lda @dir
 	jsr enemy::collide1x1
 	cmp #$00
 	beq @redraw
