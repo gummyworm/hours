@@ -322,8 +322,13 @@ knockframes: .byte 0	; frames to knock back player
 
 ;--------------------------------------
 .proc fire
-	ldx xpos
-	ldy ypos
+	lda xpos
+	clc
+	adc #4
+	tax
+	lda ypos
+	adc #4
+	tay
 	lda #$09
 	sta $f0
 	lda dir

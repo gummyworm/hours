@@ -91,7 +91,7 @@ ai_patterns:
 @xpos=$f9
 @ypos=$fa
 @dir=$fd
-	ldx #3
+	ldx #5
 	jsr rnd::num
 	cmp #$00
 	bne @done
@@ -99,8 +99,13 @@ ai_patterns:
 	; fire a bullet in the player's direction
 	lda #$09
 	sta $f0
-	ldx @xpos
-	ldy @ypos
+	lda @xpos
+	clc
+	adc #4
+	tax
+	lda @ypos
+	adc #4
+	tay
 	jsr player::dirto
 	jsr screen::movem
 	jsr blt::add

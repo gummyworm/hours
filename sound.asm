@@ -37,7 +37,7 @@ fxtab:  .word $0000
 ;--------------------------------------
 sfx_hit:
 .byte @hitlen	; length
-.byte 10, 128,195,131,100	; frames to hold sound and values for each voice
+.byte ASCEND,10,128,195,131,100	; frames to hold sound and values for each voice
 @hitlen=*-sfx_hit+1
 
 sfx_hitenemy:
