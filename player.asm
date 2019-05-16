@@ -39,10 +39,10 @@ knockframes: .byte 0	; frames to knock back player
 .CODE
 ;--------------------------------------
 .proc __player_init
-	lda #30
-	sta xpos
-	lda #50
-	sta ypos
+	ldx #30
+	stx xpos
+	ldy #50
+	sty ypos
 	lda #4
 	sta hp
 	rts

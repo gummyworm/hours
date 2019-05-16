@@ -2,10 +2,11 @@
 .export __sound_song
 .export __sound_update
 
+.export __sfx_fire
 .export __sfx_hit
 .export __sfx_hitenemy
 .export __sfx_kill
-.export __sfx_fire
+.export __sfx_pickup
 
 .BSS
 ;--------------------------------------
@@ -29,6 +30,7 @@ sfxtab:
 	.word sfx_hitenemy
 	.word sfx_kill
 	.word sfx_fire
+	.word sfx_pickup
 
 fxtab:  .word $0000
 	.word descend
@@ -36,24 +38,30 @@ fxtab:  .word $0000
 
 ;--------------------------------------
 sfx_hit:
-.byte @hitlen	; length
+.byte @len ; length
 .byte ASCEND,10,128,195,131,100	; frames to hold sound and values for each voice
-@hitlen=*-sfx_hit+1
+@len=*-sfx_hit+1
 
 sfx_hitenemy:
-.byte @hitenemylen
+.byte @len
 .byte 10, 0,0,131,140	; frames to hold sound and values for each voice
-@hitenemylen=*-sfx_hitenemy+1
+@len=*-sfx_hitenemy+1
 
 sfx_kill:
-.byte @killlen
+.byte @len
 .byte DESCEND,20,0,0,181,140
-@killlen=*-sfx_kill
+@len=*-sfx_kill
 
 sfx_fire:
-.byte @firelen
+.byte @len
 .byte DESCEND,20,0,0,181,140
-@firelen=*-sfx_fire
+@len=*-sfx_fire
+
+sfx_pickup:
+.byte @len
+.byte ASCEND,10,0,0,141,140
+.byte DESCEND,10,190,0,150,150
+@len=*-sfx_pickup
 
 ;--------------------------------------
 __sfx_hit:
@@ -67,6 +75,9 @@ __sfx_kill:
 	.byte $2c
 __sfx_fire:
 	lda #$03
+	.byte $2c
+__sfx_pickup:
+	lda #$04
 	jmp __sound_sfx
 
 ;--------------------------------------

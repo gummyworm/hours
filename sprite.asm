@@ -3,26 +3,30 @@
 
 .export __sprite_on
 .export __sprite_off
-.export __sprite_clear
 .export __sprite_init
 .export __sprite_point
 .export __sprite_pointoff
+.export __sprite_update
 
 sprites=CHARMEM
 
 .BSS
 ;--------------------------------------
-allocated_sprites: .res MAX_SPRITES
-backup_buffer: 	   .res MAX_SPRITES
+backup_buffer:     .res MAX_SPRITES
+charbuffer: 	   .res MAX_SPRITES
+loposbuffer: 	   .res MAX_SPRITES	; LSB
+hiposbuffer: 	   .res MAX_SPRITES	; MSB
+
+hideidx: .byte 0
 
 .CODE
 ;--------------------------------------
 .proc __sprite_init
 	ldx #MAX_SPRITES-1
-@l0:	lda #BLANK
+@l0:	lda #$ff
+	sta charbuffer,x
+	lda #BLANK
 	sta backup_buffer,x
-	lda #$ff
-	sta allocated_sprites,x
 	dex
 	bpl @l0
 	rts
@@ -33,6 +37,7 @@ backup_buffer: 	   .res MAX_SPRITES
 ; (.X,.Y)
 .proc __sprite_point
 @dst=$f0
+	rts
 	tya
 	pha
 	txa
@@ -41,7 +46,7 @@ backup_buffer: 	   .res MAX_SPRITES
 	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sta @dst
-	lda #>CHARMEM
+	lda #>sprites
 	sta @dst+1
 
 	pla
@@ -69,15 +74,14 @@ backup_buffer: 	   .res MAX_SPRITES
 
 ;--------------------------------------
 .proc __sprite_pointoff
+	rts
 	jsr screen::getchar
 	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
 	bcs @done
 	tax
 	lda backup_buffer,x
-	sta (GETCHAR_ADDR),y
-	lda #$ff
-	sta allocated_sprites,x
+	sta charbuffer,x
 @done:	rts
 .endproc
 
@@ -89,7 +93,6 @@ backup_buffer: 	   .res MAX_SPRITES
 @ystart=$f3
 @ystop=$f4
 @nextcol=$f5
-
 ; A sprite is composed of 4 UDG's arranged in the following pattern:
 ; 1|2
 ; ---
@@ -164,11 +167,12 @@ backup_buffer: 	   .res MAX_SPRITES
 	sbc @ystart
 	sta @src
 
-	lda #>CHARMEM
+	lda #>sprites
 	sta @dst+1
 	sta @dst2+1
 	sta @dst3+1
 	sta @dst4+1
+	lda #>(CHARMEM+MAX_SPRITES*8)
 	sta @src+1
 
 	lda @hclip
@@ -246,132 +250,174 @@ backup_buffer: 	   .res MAX_SPRITES
 .endproc
 
 ;--------------------------------------
-; putsprite finds the next available sprite slot and places it to the
-; screen @ (GETCHAR_ADDR),y.  The LSB of the allocated UDG is returned in .A
-.proc putsprite
-@ystop=$30
-@ysave=$31
-	cmp #BLANK
-	bcc @done
-	pha
-
-	; find a free sprite location in the table
-	ldx #MAX_SPRITES-1
-:	lda allocated_sprites,x
-	cmp #$ff
-	beq @found
-	dex
-	bpl :-
+; update hides all sprites disabled since the last update and draws all sprites
+; that have been buffered/enabled since the last update.
+.proc __sprite_update
+@dst=$f0
+	sei
 	inc $900f
-	bmi *-3			; TODO: error (too many sprites drawn)
+	ldx #$00
+@l0:	lda charbuffer,x
+	bmi @next
+	ldy loposbuffer,x
+	sty @dst
+	ldy hiposbuffer,x
+	sty @dst+1
+	ldy #$00
+	sta (@dst),y
+@next:	cpx hideidx
+	bcs :+
+@recycle:
+	lda #$ff
+	sta charbuffer,x
+	ldy backup_buffer,x
+	sta charbuffer,y
+:	inx
+	cpx #MAX_SPRITES
+	bcc @l0
 
-@found:	pla
-	sta backup_buffer,x	; save the character that is being clobbered
-	txa
-	sta allocated_sprites,x
-
-@copy:	pha
-	sty @ysave
-	lda (GETCHAR_ADDR),y
-	asl
-	asl
-	asl
-	tay
-	adc #$08
-	sta @ystop
-	txa
+	lda hideidx
+	beq @done
 	asl
 	asl
 	asl
 	tax
-@l0:	lda CHARMEM,y
+	lda #$00
+@l1:	sta sprites,x
+	dex
+	bne @l1
+	sta sprites
+
+@done:	lda #$00
+	sta hideidx
+	cli
+	dec $900f
+	rts
+.endproc
+
+;--------------------------------------
+; putsprite finds the next available sprite slot and places it to the
+; screen @ (GETCHAR_ADDR),y.  The LSB of the allocated UDG is returned in .A
+.proc putsprite
+@ysave=$30
+@char=$31
+@dst=$32
+@copysrc=$34
+	sty @ysave
+	sta @char
+@getdst:
+	tya
+	clc
+	adc GETCHAR_ADDR
+	sta @dst
+	lda GETCHAR_ADDR+1
+	adc #$00
+	sta @dst+1
+
+@chkdst:
+	lda @char
+	cmp #MAX_SPRITES
+	bcs @new
+
+	; check if a sprite is buffered at the destination
+	ldx #MAX_SPRITES-1
+@chk0:	lda @dst
+@chk1:	cmp loposbuffer,x
+	bne @nxt
+@chkhi:	lda @dst+1
+	cmp hiposbuffer,x
+	beq @match
+@nxt:	dex
+	bmi @new
+	cpx hideidx
+	bcs @chk0
+@nomatch: ; the sprite at the destination will be removed
+	ldx @char
+	lda backup_buffer,x
+	sta @char
+	bcc @new
+@match:	; a sprite is already buffered at the location of this one
+	ldx @char
+	stx @char
+	jmp @nobackup
+
+@new:	; find a free sprite location in the table
+	ldx #MAX_SPRITES-1
+:	lda charbuffer,x
+	bmi @found
+	dex
+	bpl :-
+	inc $900f
+	jmp *-3			; TODO: error (too many sprites drawn)
+@found:	lda @char
+	sta backup_buffer,x	; save the character that is being clobbered
+@nobackup:
+	txa
+	sta charbuffer,x
+	lda @dst
+	sta loposbuffer,x
+	lda @dst+1
+	sta hiposbuffer,x
+
+@copy:	lda @char
+	asl
+	asl
+	asl
+	sta @copysrc
+	lda #>CHARMEM
+	adc #$00
+	sta @copysrc+1
+	txa
+	asl
+	asl
+	asl
+	pha
+
+	tax
+	ldy #$00
+@l0:	lda (@copysrc),y
 	sta sprites,x
 	inx
 	iny
-	cpy @ystop
-	bne @l0
+	cpy #$08
+	bcc @l0
 
 	ldy @ysave
-	pla
-
-@done:	sta (GETCHAR_ADDR),y
-	asl
-	asl
-	asl
+@done:	pla
 	rts
 .endproc
 
 ;--------------------------------------
 ; clear the sprite character(s) at the position in (.X,.Y)
 .proc __sprite_off
+@cnt=$30
 	jsr screen::getchar
+	lda #3
+	sta @cnt
+@l0:	ldx @cnt
+	ldy @testoffsets,x
 	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
-	bcs @done
+	bcs @next
 	tax
+
+	ldy hideidx
 	lda backup_buffer,x
-	sta (GETCHAR_ADDR),y
+	sta charbuffer,y
+	sta charbuffer,x
+	lda loposbuffer,x
+	sta loposbuffer,y
+	lda hiposbuffer,x
+	sta hiposbuffer,y
+	txa
+	sta backup_buffer,y
 	lda #$ff
-	sta allocated_sprites,x
+	sta hiposbuffer,x
+	sta loposbuffer,x
+	inc hideidx
 
-	iny
-	lda (GETCHAR_ADDR),y
-	cmp #MAX_SPRITES
-	bcs @row2
-	tax
-	lda backup_buffer,x
-	sta (GETCHAR_ADDR),y
-	lda #$ff
-	sta allocated_sprites,x
-
-@row2:	ldy #SCREEN_W
-	lda (GETCHAR_ADDR),y
-	cmp #MAX_SPRITES
-	bcs @done
-	tax
-	lda backup_buffer,x
-	sta (GETCHAR_ADDR),y
-	lda #$ff
-	sta allocated_sprites,x
-
-	iny
-	lda (GETCHAR_ADDR),y
-	cmp #MAX_SPRITES
-	bcs @done
-	tax
-	lda backup_buffer,x
-	sta (GETCHAR_ADDR),y
-	lda #$ff
-	sta allocated_sprites,x
-
-@done:	rts
-.endproc
-
-;--------------------------------------
-.proc __sprite_clear
-	lda #$ff
-	ldx #MAX_SPRITES-1
-@l0:	sta allocated_sprites,x
-	dex
+@next:	dec @cnt
 	bpl @l0
-
-	ldx #MAX_SPRITES*8
-	lda #$00
-@l1:	sta CHARMEM-1,x
-	dex
-	bne @l1
-
-	rts
+@done:	rts
+@testoffsets: .byte SCREEN_W+1,1,SCREEN_W,0
 .endproc
-
-
-;--------------------------------------
-; plotchar draws .A at (.X, .Y).
-.proc plotchar
-	pha
-	jsr screen::getchar
-	pla
-	sta (GETCHAR_ADDR),y
-	rts
-.endproc
-

@@ -158,9 +158,10 @@ ai_patterns:
 .endproc
 
 ;--------------------------------------
-; sets the knockback direction to the value in .A
+; collide1x1 checks collision with the coordinate in (.X,.Y) and all the
+; enemies. Sets the knockback direction for enemies hit to the value in .A.
 .proc __enemy_collide1x1
-	sta $f2
+	sta $36
 	lda #$01
 	.byte $2c
 .endproc
@@ -173,7 +174,7 @@ ai_patterns:
 ;--------------------------------------
 ; collide checks collision with all enemies and harms those
 ; that are colliding with the box (x,y)-(x+$f0,x+$f1).
-; returns .A = number of collisions
+; returns .A = number of collisions, .Z is set if no collisions
 .proc collide
 @left=$30
 @right=$31
@@ -181,9 +182,9 @@ ai_patterns:
 @bot=$33
 @cnt=$34
 @hits=$35
+@dir=$36
 @w=$f0
 @h=$f1
-@dir=$f2
 	stx @left
 	sty @top
 	txa
@@ -233,7 +234,7 @@ ai_patterns:
 	jsr sprite::off
 	jsr sfx::kill
 	inc @hits
-	jmp @next
+	bne @next
 
 @knock:	lda #KNOCK_FRAMES*3
 	sta knockback,x

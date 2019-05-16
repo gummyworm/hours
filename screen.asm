@@ -289,7 +289,7 @@ testroom2:
 @l0:	ldy #SCREEN_W-1
 @l1:	lda (@src),y
 	and #$0f
-	adc #16
+	adc #MAX_SPRITES
 	sta (@dst),y
 	dey
 	bpl @l1
@@ -660,7 +660,7 @@ screenaddr:
 	lda (iter),y
 	and #$0f
 	clc
-	adc #16
+	adc #MAX_SPRITES
 	rts
 .endproc
 

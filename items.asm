@@ -1,4 +1,5 @@
 .include "constants.inc"
+.include "sound.inc"
 
 .export __item_add
 .export __item_selnext
@@ -18,6 +19,7 @@ selected: .byte 0
 	sta items,x
 	inc num
 	sta SCREEN+(ITEMS_ROW*SCREEN_W)+ITEMS_COL,x
+	jsr sfx::pickup
 	rts
 .endproc
 

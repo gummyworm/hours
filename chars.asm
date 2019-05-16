@@ -31,9 +31,11 @@ charset_sz=*-charset
 ;--------------------------------------
 .proc __chars_init
 	ldx #charset_sz-1
-@l0:	lda charset-1,x
-	sta CHARMEM+MAX_SPRITES*8-1,x
+@l0:	lda charset,x
+	sta CHARMEM+MAX_SPRITES*8,x
 	dex
 	bne @l0
+	lda charset
+	sta CHARMEM+MAX_SPRITES*8
 	rts
 .endproc

@@ -1,7 +1,7 @@
 NAME=hours.prg
 SRC=$(wildcard *.asm)
 $(NAME): $(SRC)
-	cl65 -o $@ -C link.config $^ 
+	cl65 -o $@ -C link.config -g $^ 
 test:
 	xvic -memory none -ntsc -cartA $(NAME)
 clean:
