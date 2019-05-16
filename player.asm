@@ -173,10 +173,13 @@ knockframes: .byte 0	; frames to knock back player
 
 @fire:  lda @dirty
 	bne @spritesoff
+	ldx prevx
+	ldy prevy
+	jsr sprite::off
 	jsr joy::fire
-	bne @inputdone
+	bne :+
 	jsr action
-	jmp @updateplayer
+:	jmp @updateplayer
 @inputdone:
 	rts
 

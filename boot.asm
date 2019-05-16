@@ -62,7 +62,7 @@ enter:
 	dex
 	bpl :-
 
-	lda #$ff	; chars @ $1c00, screen @ $1e00
+	lda #$fe	; chars @ $1800, screen @ $1e00
 	sta $9005
 	lda #(BORDER_COLOR | (BG_COLOR << 4))|$08
 	sta $900f
@@ -136,7 +136,7 @@ splitirq:
 	lda $9004
 	bne *-3
 
-	lda #$ff
+	lda #$fe
 	sta $9005
 	lda #(BORDER_COLOR | (BG_COLOR << 4))|$08
 	sta $900f

@@ -45,8 +45,7 @@ hideidx: .byte 0
 	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sta @dst
-	lda #>sprites
-	sta @dst+1
+	stx @dst+1
 
 	pla
 .ifdef MULTICOLOR
@@ -123,10 +122,19 @@ hideidx: .byte 0
 @src=$28	; start of source UDG - YSTART
 @hclip=$2a
 @vclip=$2b
+	pha
+	lda #$00
+	sta @src+1
+	pla
 	asl
 	asl
+	rol @src+1
 	asl
 	sta @src
+	rol @src+1
+	lda #>(CHARMEM)
+	adc @src+1
+	sta @src+1
 
 	lda #$00
 	sta @vclip
@@ -161,11 +169,13 @@ hideidx: .byte 0
 	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sta @dst
+	stx @dst+1
 
 	iny
 	lda (GETCHAR_ADDR),y
 	jsr putsprite
 	sta @dst2
+	stx @dst2+1
 
 	ldy #SCREEN_W
 	lda (GETCHAR_ADDR),y
@@ -173,6 +183,9 @@ hideidx: .byte 0
 	sec
 	sbc #8
 	sta @dst3
+	txa
+	sbc #$00
+	sta @dst3+1
 
 	iny
 	lda (GETCHAR_ADDR),y
@@ -180,19 +193,14 @@ hideidx: .byte 0
 	sec
 	sbc #8
 	sta @dst4
+	txa
+	sbc #$00
+	sta @dst4+1
 
 	lda @src
 	sec
 	sbc @ystart
 	sta @src
-
-	lda #>sprites
-	sta @dst+1
-	sta @dst2+1
-	sta @dst3+1
-	sta @dst4+1
-	lda #>(CHARMEM+MAX_SPRITES*8)
-	sta @src+1
 
 	lda @hclip
 	beq :+
@@ -322,6 +330,7 @@ hideidx: .byte 0
 @char=$31
 @dst=$32
 @copysrc=$34
+@copydst=$36
 	sty @ysave
 	sta @char
 @getdst:
@@ -378,31 +387,43 @@ hideidx: .byte 0
 	lda @dst+1
 	sta hiposbuffer,x
 
-@copy:	lda @char
-	asl
-	asl
-	asl
-	sta @copysrc
-	lda #>CHARMEM
-	adc #$00
-	sta @copysrc+1
+	; get the location of the sprite character data to copy to
+	lda #$00
+	sta @copydst+1
 	txa
 	asl
 	asl
+	rol @copydst+1
 	asl
-	pha
+	sta @copydst
+	rol @copydst+1
+	lda #>sprites
+	adc @copydst+1
+	sta @copydst+1
 
-	tax
+@copy:	lda #$00
+	sta @copysrc+1
+	lda @char
+	asl
+	asl
+	rol @copysrc+1
+	asl
+	sta @copysrc
+	rol @copysrc+1
+	lda #>CHARMEM
+	adc @copysrc+1
+	sta @copysrc+1
+
 	ldy #$00
 @l0:	lda (@copysrc),y
-	sta sprites,x
-	inx
+	sta (@copydst),y
 	iny
 	cpy #$08
 	bcc @l0
 
 	ldy @ysave
-@done:	pla
+@done:	lda @copydst
+	ldx @copydst+1
 	rts
 .endproc
 
