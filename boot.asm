@@ -111,7 +111,6 @@ initui:
 
 main:	lda nextframe
 	cmp #$01
-	;jsr joy::fire
 	bcc main
 	jsr sprite::update
 	jsr blt::update

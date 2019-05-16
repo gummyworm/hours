@@ -303,17 +303,6 @@ hideidx: .byte 0
 	cpx #MAX_SPRITES
 	bcc @l0
 
-	lda hideidx
-	beq @done
-	asl
-	asl
-	asl
-	tax
-	lda #$00
-@l1:	sta sprites,x
-	dex
-	bne @l1
-	sta sprites
 
 @done:	lda #$00
 	sta hideidx

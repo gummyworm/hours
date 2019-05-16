@@ -84,7 +84,6 @@ ypos: .res MAX_BULLETS
 	lda chars,x
 	ldx @x
 	jsr sprite::point
-	;jsr sprite::on
 
 @next:	dec @cnt
 	bpl @l0
