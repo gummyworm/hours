@@ -89,7 +89,7 @@ enter:
 	ldx #SCREEN_W*8-24
 	ldy #20
 	lda #EYE
-	;jsr enemy::spawn
+	jsr enemy::spawn
 
 	; enable player
 	jsr player::on
@@ -114,9 +114,9 @@ main:	lda nextframe
 	;jsr joy::fire
 	bcc main
 	jsr sprite::update
+	jsr blt::update
 	jsr player::update
 	jsr enemy::update
-	jsr blt::update
 	lda #$00
 	sta nextframe
 	jmp main

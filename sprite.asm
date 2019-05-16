@@ -49,7 +49,7 @@ hideidx: .byte 0
 
 	pla
 .ifdef MULTICOLOR
-	and #$03
+	and #$06
 .else
 	and #$07
 .endif

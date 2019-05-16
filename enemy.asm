@@ -227,8 +227,7 @@ ai_patterns:
 
 @hit:	dec hp,x
 	bne @knock
-@kill:	lda ypos,x
-	tay
+@kill:	ldy ypos,x
 	lda xpos,x
 	tax
 	jsr sprite::off
