@@ -37,7 +37,6 @@ hideidx: .byte 0
 ; (.X,.Y)
 .proc __sprite_point
 @dst=$f0
-	rts
 	tya
 	pha
 	txa
@@ -51,7 +50,7 @@ hideidx: .byte 0
 
 	pla
 .ifdef MULTICOLOR
-	and #$06
+	and #$03
 .else
 	and #$07
 .endif
@@ -59,10 +58,18 @@ hideidx: .byte 0
 	pla
 	and #$07
 	tay
+.ifdef MULTICOLOR
+	lda #$80
+.else
 	lda #$00
 	sec
-@l0:	ror
+.endif
+
+@l0:
 .ifdef MULTICOLOR
+	lsr
+	lsr
+.else
 	ror
 .endif
 	dex
@@ -74,14 +81,26 @@ hideidx: .byte 0
 
 ;--------------------------------------
 .proc __sprite_pointoff
-	rts
 	jsr screen::getchar
 	lda (GETCHAR_ADDR),y
 	cmp #MAX_SPRITES
 	bcs @done
+
 	tax
+	ldy hideidx
 	lda backup_buffer,x
+	sta charbuffer,y
 	sta charbuffer,x
+	lda loposbuffer,x
+	sta loposbuffer,y
+	lda hiposbuffer,x
+	sta hiposbuffer,y
+	txa
+	sta backup_buffer,y
+	lda #$ff
+	sta hiposbuffer,x
+	sta loposbuffer,x
+	inc hideidx
 @done:	rts
 .endproc
 
