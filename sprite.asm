@@ -1,6 +1,7 @@
 .include "constants.inc"
 .include "screen.inc"
 
+.export __sprite_clear
 .export __sprite_on
 .export __sprite_off
 .export __sprite_init
@@ -422,7 +423,7 @@ hideidx: .byte 0
 .endproc
 
 ;--------------------------------------
-; clear the sprite character(s) at the position in (.X,.Y)
+; off clears the sprite character(s) at the position in (.X,.Y)
 .proc __sprite_off
 @cnt=$30
 	jsr screen::getchar
@@ -454,4 +455,9 @@ hideidx: .byte 0
 	bpl @l0
 @done:	rts
 @testoffsets: .byte SCREEN_W+1,1,SCREEN_W,0
+.endproc
+
+;--------------------------------------
+.proc __sprite_clear
+	jmp __sprite_init
 .endproc

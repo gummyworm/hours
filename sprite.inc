@@ -4,6 +4,7 @@
 .import __sprite_point
 .import __sprite_pointoff
 .import __sprite_update
+.import __sprite_clear
 
 .scope sprite
 	on = __sprite_on
@@ -12,4 +13,5 @@
 	point = __sprite_point
 	pointoff = __sprite_pointoff
 	update = __sprite_update
+	clear = __sprite_clear
 .endscope
