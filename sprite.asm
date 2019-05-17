@@ -50,6 +50,7 @@ hideidx: .byte 0
 	pla
 .ifdef MULTICOLOR
 	and #$06
+	lsr
 .else
 	and #$07
 .endif
@@ -59,21 +60,23 @@ hideidx: .byte 0
 	tay
 .ifdef MULTICOLOR
 	lda #$80
+	cpx #$00
+	beq @put
 .else
 	lda #$00
 	sec
 .endif
-
 @l0:
 .ifdef MULTICOLOR
 	lsr
 	lsr
+	dex
 .else
 	ror
 .endif
 	dex
 	bpl @l0
-	eor (@dst),y
+@put:	eor (@dst),y
 	sta (@dst),y
 	rts
 .endproc
@@ -216,6 +219,11 @@ hideidx: .byte 0
 @l2:	lsr
 	ror @nextcol
 	dex
+.ifdef MULTICOLOR
+	lsr
+	ror @nextcol
+	dex
+.endif
 	bne @l2
 :	rts
 
@@ -281,7 +289,6 @@ hideidx: .byte 0
 ; that have been buffered/enabled since the last update.
 .proc __sprite_update
 @dst=$f0
-	sei
 	inc $900f
 	ldx #$00
 @l0:	lda charbuffer,x
@@ -294,19 +301,17 @@ hideidx: .byte 0
 	sta (@dst),y
 @next:	cpx hideidx
 	bcs :+
+
 @recycle:
 	lda #$ff
-	sta charbuffer,x
 	ldy backup_buffer,x
 	sta charbuffer,y
 :	inx
 	cpx #MAX_SPRITES
 	bcc @l0
 
-
 @done:	lda #$00
 	sta hideidx
-	cli
 	dec $900f
 	rts
 .endproc

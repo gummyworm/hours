@@ -57,7 +57,7 @@ ypos: .res MAX_BULLETS
 	lda #BULLET_SPEED
 	sta $f0
 	lda @dir
-	jsr screen::movem
+	jsr screen::movem1
 	stx @x
 	sty @y
 	bcc @remove

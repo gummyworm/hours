@@ -4,6 +4,7 @@
 .export __screen_canmove
 .export __screen_move
 .export __screen_movem
+.export __screen_movem1
 .export __screen_rvs
 
 .export __screen_iter_begin_topleft
@@ -355,6 +356,28 @@ screenaddr:
 	rts
 
 ;--------------------------------------
+; canmove1 returns .Z set if the character in (.X,.Y) can occupied
+; by a 1x1 sprite.
+.proc __screen_canmove1
+	cpx #$fe
+	bcs @no
+	cpy #$fe
+	bcs @no
+	cpx #(SCREEN_W*8)-8
+	bcs @no	; value is negative or off right edge of screen
+	cpy #(SCREEN_H*8)-8
+	bcs @no
+
+	jsr __screen_getchar
+	cmp #BLANK+1
+	bcs @no
+	lda #$00
+	rts
+@no:	lda #$ff
+	rts
+.endproc
+
+;--------------------------------------
 ; canmove returns .Z set if the character in (.X,.Y) can
 ; be occupied. If it cannot, .A contains the character that prohibits the move
 .proc __screen_canmove
@@ -389,6 +412,15 @@ screenaddr:
 .endproc
 
 ;--------------------------------------
+; movem1 moves a 1x1 sprite by $f0 steps of the direction in .A
+.proc __screen_movem1
+	pha
+	lda #$00
+	sta $36
+	pla
+	jmp __screen_movexm
+.endproc
+;--------------------------------------
 ; move updates the coordinates of (.X,.Y) by 1 step in the direction given in .A,
 ; validates the move, and returns the updated coordinates.
 ; If the move was not possible (because of a character at the new location)
@@ -397,6 +429,8 @@ screenaddr:
 	pha
 	lda #$01
 	sta $f0
+	lda #$ff
+	sta $36
 	pla
 .endproc
 ;--------------------------------------
@@ -405,11 +439,23 @@ screenaddr:
 ; If the move was not possible (because of a character at the new location)
 ; the carry flag is CLEAR.
 .proc __screen_movem
+	pha
+	lda #$ff
+	sta $36
+	pla
+.endproc
+;--------------------------------------
+; movexm updates the coordinates of (.X,.Y) by $f0 steps in the direction
+; given in .A, validates the move, and returns the updated coordinates.
+; If the move was not possible (because of a character at the new location)
+; the carry flag is CLEAR.
+.proc __screen_movexm
 @x=$30
 @y=$31
 @prevx=$32
 @prevy=$33
 @update=$34
+@size=$36	; if negative, do 8x8 collision, if positive, 1x1
 	pha
 	stx @prevx
 	sty @prevy
@@ -424,7 +470,12 @@ screenaddr:
 	jsr @step
 	stx @x
 	sty @y
-@check:	jsr __screen_canmove
+@check:	bit $36
+	bmi :+
+	jsr __screen_canmove1
+	jmp @checkdone
+:	jsr __screen_canmove
+@checkdone:
 	bne @stay
 @move:	ldx @x
 	ldy @y

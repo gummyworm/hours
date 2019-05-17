@@ -2,6 +2,7 @@
 .import __screen_getchar
 .import __screen_move
 .import __screen_movem
+.import __screen_movem1
 .import __screen_flip
 .import __screen_rvs
 .import __screen_buffer
@@ -21,6 +22,7 @@
 	getchar = __screen_getchar
 	move = __screen_move
 	movem = __screen_movem
+	movem1 = __screen_movem1
 	flip = __screen_flip
 	rvs = __screen_rvs
 	buffer = __screen_buffer
