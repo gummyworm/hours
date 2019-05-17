@@ -380,6 +380,7 @@ screenaddr:
 ;--------------------------------------
 ; canmove returns .Z set if the character in (.X,.Y) can
 ; be occupied. If it cannot, .A contains the character that prohibits the move
+; and (GETCHAR_ADDR),y contains its address
 .proc __screen_canmove
 	cpx #$fe
 	bcs @no

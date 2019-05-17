@@ -237,7 +237,11 @@ knockframes: .byte 0	; frames to knock back player
 	cmp #PICKUPS
 	bcc @stay
 @takeitem:
+	tya
+	pha
 	jsr item::add
+	pla
+	tay
 	lda #BLANK	; delete the item
 	sta (GETCHAR_ADDR),y
 
